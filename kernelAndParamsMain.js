@@ -336,6 +336,18 @@ $(document).ready(function() {
         kernelEditor.setValue(selectedJob.code.kernelCode);
         paramsEditor.setValue(selectedJob.code.paramsAndData);
         afterBarrierEditor.setValue(selectedJob.code.afterBarrierCode);
+        
+        if(selectedJob.code.hasAfterBarrier)
+        {
+            $("#afterBarriertd").toggle();
+            afterBarrierEditor.focus();
+            kernelEditor.focus();
+        }
+
+        if (selectedJob.code.isExample)
+            formatExample();
+
+
     }
 
     /* On error Handling */
@@ -442,6 +454,9 @@ function loadExternalCode(jobCode) {
     window.paramsEditor.setValue(window.selectedJob.code.paramsAndData);
     window.afterBarrierEditor.setValue(window.selectedJob.code.afterBarrierCode);
 
+    if (window.selectedJob.code.isExample)
+        window.formatExample();
+
 }
 
 function showError(error) {
@@ -480,4 +495,16 @@ function getSelectedRange(cm) {
 function autoFormatSelection(cm) {
     var range = getSelectedRange(cm);
     cm.autoFormatRange(range.from, range.to);
+}
+
+function formatExample() {
+    window.kernelEditor.execCommand("selectAll");
+    window.autoFormatSelection(kernelEditor);
+    window.kernelEditor.execCommand("goLineRight");
+    window.paramsEditor.execCommand("selectAll");
+    window.autoFormatSelection(paramsEditor);
+    window.paramsEditor.execCommand("goLineRight");
+    window.afterBarrierEditor.execCommand("selectAll");
+    window.autoFormatSelection(afterBarrierEditor);
+    window.afterBarrierEditor.execCommand("goLineRight");
 }

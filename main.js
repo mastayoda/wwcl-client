@@ -63,7 +63,7 @@ $(document).ready(function() {
 
     /* Tooltip Section */
     $(document).tooltip({
-        items: "[box-id], [top-name], [top-name-sdbx],[job-name]",
+        items: "[box-id], [top-name], [top-name-sdbx],[job-name], [ex-job-name]",
         content: function() {
             var element = $(this);
 
@@ -89,6 +89,12 @@ $(document).ready(function() {
             } else if (element.is("[job-name]")) {
                 var name = element.attr('job-name');
                 var job = getJob(name);
+
+                return job.desc;
+            } else if (element.is("[ex-job-name]")) {
+                var name = element.attr('ex-job-name');
+
+                var job = getExJob(name);
 
                 return job.desc;
             }
@@ -165,6 +171,16 @@ $(document).ready(function() {
         } else {
             tblExampleJobs.$('tr.selected').removeClass('selected');
             $(this).addClass('selected');
+        }
+
+        /* Loading Job Form Data */
+        if (exampleJobsArr.length > 0) {
+            var jobName = this.children[0].innerHTML;
+            loadExJobForm(jobName);
+
+            /* If code window is open, set corresponding code */
+            if (isEditorWinOpen)
+                editWin.loadExternalCode(getExJob(jobName));
         }
     });
     $("#btnKernelAndParams").button().click(function() {
@@ -255,6 +271,8 @@ $(document).ready(function() {
 
     /* Restore Topologies */
     restoreTopologies();
+    /* Load Job Examples */
+    loadExamples();
 
     /* Restore Jobs */
     restoreJobs();
@@ -263,6 +281,42 @@ $(document).ready(function() {
     /* Initialize socket.io communication and data*/
     initializeSocketIO();
 });
+
+function loadExamples() {
+
+    /* Instantiate the json requester */
+    window.jsonClient = require('request-json').newClient('https://raw.githubusercontent.com/mastayoda/wwcl-examples/master/');
+
+    /* Request JSON example index array */
+    jsonClient.get('exampleIndex.json', null, function(err, res, body) {
+
+        var exIndexArr = body.arr;
+        /* Get all examples */
+        for (var i = 0; i < exIndexArr.length; i++) {
+            console.log(exIndexArr[i]);
+            jsonClient.get(exIndexArr[i], null, function(err, res, body) {
+
+                var rawJob = body;
+                var job = {};
+                job.code = {};
+                job.code.afterBarrierCode = rawJob.afBarrFunc;
+                job.code.hasAfterBarrier = rawJob.hasAftBarr;
+                job.code.isPartitioned = rawJob.isPartitioned;
+                job.code.kernelCode = rawJob.kernel;
+                job.code.paramsAndData = JSON.stringify(rawJob.params);
+
+                job.name = rawJob.name;
+                job.desc = rawJob.desc;
+
+                exampleJobsArr.push(job);
+                addJobToExampleTable(job);
+            });
+        }
+
+
+    });
+
+}
 
 function loadJobForm(name) {
 
@@ -282,12 +336,32 @@ function loadJobForm(name) {
     selectedJob = job;
 }
 
+function loadExJobForm(name) {
+
+    var spn = $("#spnIndicator");
+    var txtJobName = $("#txtJobName");
+    var txtJobDesc = $("#txtJobDesc");
+    var job = getExJob(name);
+
+    /* Setting Valid Code */
+    setCodeIndicatorIcon(job.code !== undefined)
+
+    /* Setting Data */
+    txtJobName.val(job.name);
+    txtJobDesc.val(job.desc);
+
+    /* This is the same but will just copy the job */
+    selectedJob = {};
+    selectedJob.code = job.code;
+    selectedJob.code.isExample = true;
+}
+
 function DeployJob() {
     /* Execute Selected Job */
     if (selectedJob.name && selectedTopology) {
 
         /* Object for the whole job */
-        var jobObj ={}
+        var jobObj = {}
         jobObj.clientSocketId = socketSessionID;
         jobObj.sdbxs = [];
 
@@ -303,10 +377,8 @@ function DeployJob() {
 
 
         /* Calculating total flops and sandboxes for the job*/
-        for (var i = 0; i < selectedTopology.sdbxs.length; i++)
-        {
-            if (selectedTopology.sdbxs[i].isPresent)
-            {
+        for (var i = 0; i < selectedTopology.sdbxs.length; i++) {
+            if (selectedTopology.sdbxs[i].isPresent) {
                 /* Setting the sandbox properties */
                 var sdbxObj = {};
                 sdbxObj.clientSocketId = jobObj.clientSocketId;
@@ -320,7 +392,7 @@ function DeployJob() {
                 totalFlops += avlbSandBoxes[selectedTopology.sdbxs[i].id].sysInfo.flops;
             }
         }
-            /* Setting dialog text */
+        /* Setting dialog text */
         dspnJobName.html(selectedJob.name);
         dspnJobDataPld.html(JSON.stringify(selectedJob.code.paramsAndData).length + " bytes");
         dspnJobKrnlPld.html(JSON.stringify(selectedJob.code.kernelCode).length + " bytes");
@@ -353,9 +425,8 @@ function DeployJob() {
     }
 }
 
-function executeDeployment(jobObj)
-{
-    socket.emit("jobDeploymentRequest",jobObj);
+function executeDeployment(jobObj) {
+    socket.emit("jobDeploymentRequest", jobObj);
 }
 
 function SaveJob() {
@@ -446,6 +517,19 @@ function addJobToTable(job) {
     tblJobs.row.add(data).draw();
 }
 
+function addJobToExampleTable(job) {
+
+    var data = [];
+
+    /*The Job Name*/
+    data[0] = job.name;
+    /*The Job Description*/
+    data[1] = "<button ex-job-name='" + job.name + "' class='ui-button ui-widget ui-state-default ui-corner-all ui-button-text-only'>&nbsp;<span class='glyphicon glyphicon-eye-open'></span>&nbsp;</button>";
+    /*The Job Delete Button */
+
+    tblExampleJobs.row.add(data).draw();
+}
+
 function getJob(jobName) {
 
     /* Searching Job*/
@@ -453,6 +537,17 @@ function getJob(jobName) {
         /* Restore Jobs into the table */
         if (savedJobsArr[i].name == jobName)
             return savedJobsArr[i];
+    }
+    return null;
+}
+
+function getExJob(jobName) {
+
+    /* Searching Job*/
+    for (var i = 0; i < exampleJobsArr.length; i++) {
+        /* Restore Jobs into the table */
+        if (exampleJobsArr[i].name == jobName)
+            return exampleJobsArr[i];
     }
     return null;
 }
@@ -620,7 +715,7 @@ function initializeSocketIO() {
         });
 
         /* Receive Job Results */
-        socket.on('jobExecutionErrorResponse', function(error) {  
+        socket.on('jobExecutionErrorResponse', function(error) {
             console.log(error);
         });
 
