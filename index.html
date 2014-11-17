@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="">
+    <meta name="author" content="Dashboard">
+    <meta name="keyword" content="Dashboard, Bootstrap, Project, Template, Theme, Responsive, Fluid, Retina">
+
+    <title>Worldwide Cluster</title>
+
+    <!-- Bootstrap core CSS -->
+    <link href="assets/css/bootstrap.css" rel="stylesheet">
+    <!--external css-->
+    <link href="assets/font-awesome/css/font-awesome.css" rel="stylesheet" />
+    <link rel="stylesheet" type="text/css" href="assets/css/zabuto_calendar.css">
+    <link rel="stylesheet" type="text/css" href="assets/js/gritter/css/jquery.gritter.css" />
+    <link rel="stylesheet" type="text/css" href="assets/lineicons/style.css">
+
+    <!--Jquery UI and DataTables css-->
+    <link rel="stylesheet" type="text/css" href="assets/css/jquery-ui.css">
+    <link rel="stylesheet" type="text/css" href="assets/css/dataTables.jqueryui.css">
+
+    <!-- Custom styles for this template -->
+    <link href="assets/css/style.css" rel="stylesheet">
+    <link href="assets/css/style-responsive.css" rel="stylesheet">
+
+    <!-- Javascript editor Styles -->
+    <link rel="stylesheet" href="assets/css/codemirror.css">
+    <link rel="stylesheet" href="assets/css/hint/show-hint.css">
+
+
+</head>
+
+<body>
+
+    <section id="container">
+
+        <!--header start-->
+        <header class="header black-bg" style="-webkit-app-region: drag">
+            <div class="sidebar-toggle-box">
+                <div class="fa fa-bars tooltips" data-placement="right" data-original-title="Toggle Navigation"></div>
+            </div>
+            <!--logo start-->
+            <b class="logo">Worldwide Cluster</b>
+            <!--logo end-->
+
+            <div class="top-menu">
+                <ul class="nav pull-right top-menu">
+                    <li><a class="logout" href="javascript:exitClient();">Exit</a>
+                    </li>
+                </ul>
+            </div>
+        </header>
+        <!--header end-->
+
+        <!--sidebar start-->
+        <aside>
+            <div id="sidebar" class="nav-collapse ">
+                <!-- sidebar menu start-->
+                <ul class="sidebar-menu" id="nav-accordion">
+
+                    <p class="centered">
+                        <a href="profile.html">
+                            <img src="assets/img/analyzer.png" class="img-circle" width="60">
+                        </a>
+                    </p>
+                    <h5 class="centered">World Wide Cluster&#169;</h5>
+
+                    <li class="mt">
+                        <a class="active" href="javascript:switchScreen(1);">
+                            <i class="fa fa-dashboard"></i>
+                            <span>Dashboard</span>
+                        </a>
+                    </li>
+
+                    <li class="sub-menu">
+                        <a href="javascript:switchScreen(2);">
+                            <i class="fa fa-desktop"></i>
+                            <span>Create Topology</span>
+                        </a>
+
+                    </li>
+                    <li class="sub-menu">
+                        <a href="javascript:switchScreen(3);">
+                            <i class="fa fa-desktop"></i>
+                            <span>Deploy</span>
+                        </a>
+                    </li>
+
+                </ul>
+                <!-- sidebar menu end-->
+            </div>
+        </aside>
+        <!--sidebar end-->
+
+        <!--main content start-->
+        <section id="main-content">
+            <section class="wrapper">
+
+                <div id="dashboard" class="row">
+
+                    <div>
+                        <div id="map-canvas"></div>
+                    </div>
+
+                    <div class="tylesContainer">
+                        <div class="col-md-2 col-sm-2 box0">
+                            <div class="box1">
+                                <div class="logoContainer">
+                                    <div class="sandboxNum"></div>
+                                </div>
+                                <h3 id="lblSandBoxNum">0</h3>
+                            </div>
+                            <p>Total Online Sandboxes</p>
+                        </div>
+                        <div class="col-md-2 col-sm-2 box0">
+                            <div class="box1">
+                                <div class="logoContainer">
+                                    <div class="flops"></div>
+                                </div>
+                                <h3 id="lblFlops">0</h3>
+                                <h3>GFLOPS</h3>
+                            </div>
+                            <p>Total Aproximate FLOPS</p>
+                        </div>
+                        <div class="col-md-2 col-sm-2 box0">
+                            <div class="box1">
+                                <div class="logoContainer">
+                                    <div class="memory"></div>
+                                </div>
+                                <h3 id="lblMemory">0</h3>
+                                <h3>GB</h3>
+                            </div>
+                            <p>Total Native Sandboxes Memory</p>
+                        </div>
+                        <div class="col-md-2 col-sm-2 box0">
+                            <div class="box1">
+                                <div class="logoContainer">
+                                    <div class="browserSandBoxes"></div>
+                                </div>
+                                <h3 id="lblBrowserSdbx">0</h3>
+                            </div>
+                            <p>Browser Sandboxes</p>
+                        </div>
+                        <div class="col-md-2 col-sm-2 box0">
+                            <div class="box1">
+                                <div class="logoContainer">
+                                    <div class="nativeSandBoxes"></div>
+                                </div>
+                                <h3 id="lblNativeSdbx">0</h3>
+                            </div>
+                            <p>Native Sandboxes</p>
+                        </div>
+
+                    </div>
+                    <!-- /row mt -->
+                </div>
+
+                <div id="createTopology" class="row">
+                    <table id="sandboxes" class="display" cellspacing="0" width="100%">
+                        <thead>
+                            <tr align="center">
+                                <th>Identifier</th>
+                                <th>Type</th>
+                                <th>Flops</th>
+                                <th>Uptime</th>
+                                <th>Specs</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                        </tbody>
+                    </table>
+
+                    <button id="btnAddToSelSdbx">
+                        <span class="glyphicon glyphicon-chevron-down"></span>
+                    </button>
+
+                    <div>
+                        <table id="Selectedsandboxes" class="display" cellspacing="0" width="100%">
+                            <thead>
+                                <tr align="center">
+                                    <th>Identifier</th>
+                                    <th>Type</th>
+                                    <th>Remove</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            </tbody>
+                        </table>
+
+
+                        <div class="white-panel pn" id="pnlCreateTopDetails">
+                            <div>
+                                <table class="topologyDetailTbl">
+                                    <tr>
+                                        <td>Topology Name</td>
+                                        <td>
+                                            <div>
+                                                <input type="text" size="40" maxlength="40" id="txtTopName">
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>Description</td>
+                                        <td>
+                                            <textarea id="txtTopDesc" rows="6" cols="40"></textarea>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td></td>
+                                        <td></td>
+                                    </tr>
+                                </table>
+
+                            </div>
+                            <div class="executionButtons">
+                                <button id="btnSaveTopology">
+                                    <span class='glyphicon glyphicon-floppy-disk'></span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+
+                </div>
+
+                <div id="deploy" class="row">
+                    <table id="tblTopologies" class="display" cellspacing="0" width="100%">
+                        <thead>
+                            <tr align="center">
+                                <th>Name</th>
+                                <th>Description</th>
+                                <th>SandBoxes</th>
+                                <th>Complete?</th>
+                                <th>Delete</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                        </tbody>
+                    </table>
+
+                    <div>
+
+                        <div id="tabs">
+                            <ul>
+                                <li><a href="#tabs-1">My Jobs</a>
+                                </li>
+                                <li><a href="#tabs-2">Examples</a>
+                                </li>
+                            </ul>
+                            <div id="tabs-1">
+                                <table id="tblJobs" class="display" cellspacing="0" width="100%">
+                                    <thead>
+                                        <tr align="center">
+                                            <th>Job Name</th>
+                                            <th>Description</th>
+                                            <th>Delete</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div id="tabs-2">
+                                <table id="tblExampleJobs" class="display" cellspacing="0" width="100%">
+                                    <thead>
+                                        <tr align="center">
+                                            <th>Ex. Job Name</th>
+                                            <th>Description</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+
+                        <div class="white-panel" id="pnlCreateJobDetails">
+                            <div>
+                                <table class="jobDetailTbl">
+                                    <tr>
+                                        <td>
+                                            <button type="button" class="btn btn-default btn-sm" id="btnCreateNewJob">
+                                                <span class="glyphicon glyphicon-edit" aria-hidden="true"></span>Create New Job
+                                            </button>
+                                        </td>
+                                        <td>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>Job Name</td>
+                                        <td>
+                                            <div>
+                                                <input type="text" size="40" maxlength="40" id="txtJobName">
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>Description</td>
+                                        <td>
+                                            <textarea id="txtJobDesc" rows="6" cols="40"></textarea>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>Kernel & Parameters</td>
+                                        <td>
+                                            <button id="btnKernelAndParams">
+                                                <span id="spnIndicator" class='glyphicon glyphicon-remove-circle'></span>
+                                            </button>
+
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td></td>
+                                        <td></td>
+                                    </tr>
+                                </table>
+
+                            </div>
+                            <div class="executionButtons">
+                                <button id="btnSaveJob">
+                                    <span class='glyphicon glyphicon-floppy-disk'></span>
+                                </button>
+                                <a class="logout" href="javascript:DeployJob();">
+                                Deploy
+                            </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                </div>
+
+            </section>
+        </section>
+    </section>
+
+    <div style="display:none">
+        <!-- Delete Topology Dialog -->
+        <div id="dialog-confirm" title="Delete Topology">
+            <p>
+                <span class="ui-icon ui-icon-alert" style="float:left; margin:0 7px 20px 0;"></span>
+                <span>This topology will be permanently deleted, are you sure?</span>
+            </p>
+        </div>
+        <!-- Delete Job Dialog -->
+        <div id="dialog-confirm-job" title="Delete Job">
+            <p>
+                <span class="ui-icon ui-icon-alert" style="float:left; margin:0 7px 20px 0;"></span>
+                <span>This Job will be permanently deleted, are you sure?</span>
+            </p>
+        </div>
+
+        <!-- Deploy Job Dialog -->
+        <div id="dialog-deploy-job" title="Deploy Job">
+            <p>
+                <span>A Job with the following details will be deployed:</span>
+                <table>
+                    <tr>
+                        <td>Job Name:</td>
+                        <td>&nbsp;</td>
+                        <td>
+                            <span id="dspnJobName"></span></b>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Data Payload:</td>
+                        <td>&nbsp;</td>
+                        <td>
+                            <span id="dspnJobDataPld"></span></b>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Kernel Payload:</td>
+                        <td>&nbsp;</td>
+                        <td>
+                            <span id="dspnJobKrnlPld"></span></b>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Is data partitioned?</td>
+                        <td>&nbsp;</td>
+                        <td>
+                            <span id="dspnJobParti"></span></b>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Topology Name:</td>
+                        <td>&nbsp;</td>
+                        <td>
+                            <b><span id="dspnTopoName"></span></b>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Number of SandBoxes:</td>
+                        <td>&nbsp;</td>
+                        <td>
+                            <b><span id="dspnTopoSdbxCount"></span></b>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Total GFLOPS:</td>
+                        <td>&nbsp;</td>
+                        <td>
+                            <b><span id="dspnTopoFLOPS"></span></b>
+                        </td>
+                    </tr>
+
+                </table>
+                <br>
+                <span>Continue with deployment?:</span>
+            </p>
+        </div>
+
+        <div id="dialogError" title="Error">
+            <p id="errorText">
+            </p>
+        </div>
+        <div id="dialogMsg" title="Message">
+            <p id="msgText">
+            </p>
+        </div>
+    </div>
+
+    <!-- js placed at the end of the document so the pages load faster -->
+    <script src="assets/js/jquery.js"></script>
+    <script src="assets/js/jquery-1.8.3.min.js"></script>
+    <script src="assets/js/bootstrap.min.js"></script>
+    <script class="include" type="text/javascript" src="assets/js/jquery.dcjqaccordion.2.7.js"></script>
+    <script src="assets/js/jquery.scrollTo.min.js"></script>
+    <script src="assets/js/jquery.nicescroll.js" type="text/javascript"></script>
+    <script src="assets/js/jquery.sparkline.js"></script>
+
+    <!-- Data tables and Jquery UI settings -->
+    <script src="assets/js/jquery-ui.js"></script>
+    <script src="assets/js/jquery.dataTables.min.js"></script>
+    <script src="assets/js/dataTables.jqueryui.js"></script>
+
+    <!--common script for all pages-->
+    <script src="assets/js/common-scripts.js"></script>
+
+    <script type="text/javascript" src="assets/js/gritter/js/jquery.gritter.js"></script>
+    <script type="text/javascript" src="assets/js/gritter-conf.js"></script>
+
+    <!--Google Maps API Script-->
+    <script src="https://maps.googleapis.com/maps/api/js?v=3.exp"></script>
+
+    <!--Javascript Editor Scripts-->
+    <script src="assets/js/codemirror.js"></script>
+    <script src="assets/js/hint/show-hint.js"></script>
+    <script src="assets/js/hint/javascript-hint.js"></script>
+    <script src="assets/js/javascript/javascript.js"></script>
+
+    <!--Main Script-->
+    <script src="main.js"></script>
+
+</body>
+
+</html>

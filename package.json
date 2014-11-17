@@ -1,0 +1,34 @@
+{
+  "name": "WorldWideCluster",
+  "version": "0.0.1",
+  "description": "CS536 Final Project",
+  "main": "index.html",
+  "private": true,
+  "keywords": [
+    "node",
+    "webkit",
+    "Network",
+    "Analizer",
+    "win",
+    "osx",
+    "linux"
+  ],
+  "window": {
+    "toolbar": true,
+    "resizable": true,
+    "frame": true,
+    "width": 1100,
+    "height": 700,
+    "min_width": 600,
+    "min_height": 400,
+    "max_width": 2000,
+    "max_height": 1200,
+    "position": "center"
+  },
+  "author": "Victor Santos & Servio Palacios",
+  "license": "MIT",
+  "dependencies": {
+    "socket.io-client": "^1.2.0",
+    "localStorage": "^1.0.3"
+  }
+}

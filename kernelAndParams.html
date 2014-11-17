@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="">
+    <meta name="author" content="Victor O. Santos Uceta">
+    <meta name="keyword" content="Kernel, Parameters, Project, Parallel, WorldWideCluster">
+
+    <title>Parameters & Kernel</title>
+
+    <!-- Bootstrap core CSS -->
+    <link href="assets/css/bootstrap.css" rel="stylesheet">
+    <!--external css-->
+    <link href="assets/font-awesome/css/font-awesome.css" rel="stylesheet" />
+    <link rel="stylesheet" type="text/css" href="assets/css/zabuto_calendar.css">
+    <link rel="stylesheet" type="text/css" href="assets/js/gritter/css/jquery.gritter.css" />
+    <link rel="stylesheet" type="text/css" href="assets/lineicons/style.css">
+
+    <!--Jquery UI and DataTables css-->
+    <link rel="stylesheet" type="text/css" href="assets/css/jquery-ui.css">
+    <link rel="stylesheet" type="text/css" href="assets/css/dataTables.jqueryui.css">
+
+    <!-- Custom styles for this template -->
+    <link href="assets/css/style.css" rel="stylesheet">
+    <link href="assets/css/style-responsive.css" rel="stylesheet">
+
+    <!-- Javascript editor Styles -->
+    <link rel="stylesheet" href="assets/css/codemirror.css">
+    <link rel="stylesheet" href="assets/css/show-hint.css">
+    <link rel="stylesheet" href="assets/css/lint.css">
+    <link rel="stylesheet" href="assets/css/foldgutter.css">
+    <link rel="stylesheet" href="assets/css/mdn-like.css">
+
+</head>
+
+<body>
+
+    <section id="container">
+
+        <!--header start-->
+        <header class="header black-bg" style="-webkit-app-region: drag">
+            <!--logo start-->
+            <b class="logo">Job Kernel &amp; Parameters</b>
+            <!--logo end-->
+
+            <div class="top-menu">
+                <ul class="nav pull-right top-menu">
+                    <li><a class="logout" href="javascript:closeAndSetFlag();">Close</a>
+                    </li>
+                </ul>
+                <ul class="nav pull-right top-menu">
+                    <li><a class="save" href="javascript:saveCode();">SAVE</a>
+                    </li>
+                </ul>
+            </div>
+        </header>
+        <!--header end-->
+        <div id="editors-sidebar">
+            <table class="tblJobKernelAndParamsSettings">
+                <tr valign="top">
+                    <td align="center">
+                        <h3>Kernel</h3>
+                        <br>
+                        <button id="btnKernelHelp">Kernel Help
+                            <span class='glyphicon glyphicon-question-sign'></span>
+                        </button>
+                    </td>
+                </tr>
+                <tr valign="top">
+                    <td align="center">
+                        <h3>Data & Params.</h3>
+                        <br>
+                        <button id="btnDataParamHelp">Data & Para. Help
+                            <span class='glyphicon glyphicon-question-sign'></span>
+                        </button>
+                    </td>
+                </tr>
+            </table>
+
+        </div>
+        <!--main content start-->
+        <section id="editors-content">
+            <section class="wrapper">
+
+                <div id="dashboard" class="row">
+
+                    <div>
+
+                        <table class="codeEditorControls">
+                            <tr>
+                                <td>
+                                    <table>
+                                        <tr>
+                                            <td><a class="logout" href="javascript:autoFormatSelection(kernelEditor);;">Format Selection</a>
+                                            </td>
+                                            <td>
+                                                <h4>Kernel Function</h4>
+                                            </td>
+                                        </tr>
+                                    </table>
+
+                                </td>
+                                <td align="right" class="chkButtonCell">
+                                    <button id="btnTestKernel">Test Run
+                                        <span class='glyphicon glyphicon-play'></span>
+                                    </button>
+                                    <input type="checkbox" id="chkTogleAfterBarrier">
+                                    <label for="chkTogleAfterBarrier">After Barrier Function
+                                        <span class='glyphicon glyphicon-indent-right'></span>
+                                    </label>
+                                </td>
+                            </tr>
+                        </table>
+                        <table id="kernelTable">
+                            <tr>
+                                <td>
+                                    <textarea id="kernelCode" name="code"></textarea>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    &nbsp;
+                                </td>
+                            </tr>
+                            <tr>
+                                <td id="afterBarriertd" style="display:none">
+                                    <table class="codeEditorControls">
+                                        <tr>
+                                            <td>
+                                                <table>
+                                                    <tr>
+                                                        <td>
+                                                            <a class="logout" href="javascript:autoFormatSelection(afterBarrierEditor);;">Format Selection</a>
+                                                        </td>
+                                                        <td>
+                                                            <h4>After Barrier Function</h4>
+                                                        </td>
+                                                    </tr>
+                                                </table>
+                                            </td>
+
+                                        </tr>
+                                    </table>
+                                    <textarea id="afterBarrierCode" name="code"></textarea>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                    <br/>
+                    <div>
+
+                        <table class="codeEditorControls">
+                            <tr>
+                                <td align="left">
+                                    <table>
+                                        <tr>
+                                            <td>
+                                                <a class="logout" href="javascript:autoFormatSelection(paramsEditor);;">Format Selection</a>
+                                            </td>
+                                            <td>
+                                                <h4>Data & Params.</h4>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </td>
+
+                                <td align="right">
+                                    <input type="checkbox" id="chkPartitionData">
+                                    <label for="chkPartitionData">Partition Data
+                                        <span class='glyphicon glyphicon-th-list'></span>
+                                    </label>
+                                </td>
+                            </tr>
+                        </table>
+                        <textarea id="paramCode" name="code">{}</textarea>
+
+                    </div>
+
+                </div>
+
+            </section>
+        </section>
+    </section>
+
+    <div style="display:none">
+        <!-- Kernel Help Dialog -->
+        <div id="kernel-Help" title="Kernel Help">
+            <p>
+                <span>
+                    In order to executed distributed jobs among the Sandboxes, you must provide a Kernel function. Note the following details:
+                    <br>
+                    <ul>
+                        <li>Kernel must be writen in <b>Javascript</b>.</li>
+                        <li>Parameters and data can be accesed via the <b>params</b> object.</li>
+                        <li>No return statement is allowed, assign your results to the <b>result</b> variable. Example:
+                            <br>var a = 2;
+                            <br>var b = 3;
+                            <br><b>result</b> = a + b;
+                        </li>
+                        <li>No DOM objects are accesible in the Kernel function, only core Javascript.</li>
+                    </ul>
+
+                    Aditional to the kernel function, you can provide an <b>After Barrier Function</b> which will be executed(here in the client) after all sandboxes have returned results. Note that all these results will be available in a <b>Array</b> variable named <b>resultsArr</b>. Once again, your results must be stored in the <b>result</b> variable, this variable will be writen to a file(<b>{jobName-date}results.json</b>) and provided to you at the end of the process.
+                    <br>
+                    <b>NOTE:</b>You must <b>NOT</b> modify the <b>params</b> variable.
+                    <br>
+                    <br>
+                    <b>NOTE:</b>If the After Barrier Function fails, the previous data(<b>resultsArr</b>) will be provided instead.
+                    <br>
+                    <br>After writing and testing your code, you can hit the save and close button to persist this code in the corresponding job and be able to deploy it.
+                </span>
+            </p>
+        </div>
+        <!-- Kernel Help Dialog -->
+        <div id="params-Help" title="Data & Params. Help">
+            <p>
+                <span>
+                    You can provide your kernel function a <b>JSON</b> object as parameter or an <b>Array</b> to be partitioned among sandboxes. Note the following details:
+                    <br>
+                    <ul>
+                        <li>Parameters must be writen in <b>JSON</b> notation.</li>
+                        <li>Partitioned data must be in <b>Array</b> format. Example:
+                            <br>[1,2,40,"hello world"]</li>
+                        <li>If partitioned data is selected, the array elements will be shuffled among the sandboxed.</li>
+                    </ul>
+                    Remember: If providing a partitioned data(array), each index will be assined to one sandbox, if a single JSON parameter is provided, the same JSON object will be assigned to each sandbox.
+                </span>
+            </p>
+        </div>
+
+        <div id="results" title="Execution Results">
+            <p>
+                <div id="imgLoading">
+                    <img src="assets/img/loading.gif" />
+                    <br>
+                    <br>
+                    <span>Executing the last</span>
+                    <b><span id="spnTimer">0</span></b>
+                    <span>seconds...</span>
+                </div>
+                <div id="divExecResults">
+                    <span>Execution completed after</span>
+                    <b><span id="spnTimeElapsed"></span></b>
+                    <span>Seconds.</span>
+                    <br>
+                    <br>
+                    <span>Result:</span>
+                    <pre id='spnResults'></pre>
+                </div>
+            </p>
+        </div>
+
+        <div id="codeError" title="Syntax Error">
+            <p id="syntaxErrorMsg">
+
+            </p>
+        </div>
+        <div id="attMsg" title="Attention Message">
+            <p id="attMsgText">
+
+            </p>
+        </div>
+    </div>
+    <!-- js placed at the end of the document so the pages load faster -->
+    <script src="assets/js/jquery.js"></script>
+    <script src="assets/js/jquery-1.8.3.min.js"></script>
+    <script src="assets/js/bootstrap.min.js"></script>
+    <script class="include" type="text/javascript" src="assets/js/jquery.dcjqaccordion.2.7.js"></script>
+    <script src="assets/js/jquery.scrollTo.min.js"></script>
+    <script src="assets/js/jquery.nicescroll.js" type="text/javascript"></script>
+    <script src="assets/js/jquery.sparkline.js"></script>
+
+    <!-- Data tables settings -->
+    <script src="assets/js/jquery-ui.js"></script>
+    <script src="assets/js/jquery.dataTables.min.js"></script>
+    <script src="assets/js/dataTables.jqueryui.js"></script>
+
+    <!--common script for all pages-->
+    <script src="assets/js/common-scripts.js"></script>
+
+    <script type="text/javascript" src="assets/js/gritter/js/jquery.gritter.js"></script>
+    <script type="text/javascript" src="assets/js/gritter-conf.js"></script>
+
+    <!--Javascript Editor Scripts-->
+    <script src="assets/js/codemirror.js"></script>
+    <script src="assets/js/hint/show-hint.js"></script>
+    <script src="assets/js/hint/javascript-hint.js"></script>
+    <script src="assets/js/javascript/javascript.js"></script>
+    <script src="assets/js/lint/lint.js"></script>
+    <script src="assets/js/lint/javascript-lint.js"></script>
+    <script src="assets/js/lint/json-lint.js"></script>
+    <script src="assets/js/lint/css-lint.js"></script>
+
+    <!--External jsHint, fold, and lint Script-->
+    <script src="assets/js/jshint.js"></script>
+    <script src="assets/js/jsonlint.js"></script>
+    <script src="assets/js/csslint.js"></script>
+    <script src="assets/js/fold/foldcode.js"></script>
+    <script src="assets/js/fold/foldgutter.js"></script>
+    <script src="assets/js/fold/brace-fold.js"></script>
+    <script src="assets/js/fold/comment-fold.js"></script>
+    <script src="assets/js/active-line.js"></script>
+    <script src="assets/js/matchbrackets.js"></script>
+    <script src="assets/js/formatting.js"></script>
+    <script src="kernelAndParamsMain.js"></script>
+
+</body>
+
+</html>
