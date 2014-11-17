@@ -532,7 +532,7 @@ function initializeSocketIO() {
 
     var sysInfo = dumpSystemInfo();
 
-    window.socket = io.connect('https://worldwide_network_analyzer_central-c9-mastayoda1.c9.io', {
+    window.socket = io.connect('https://wwcl-server-mastayoda1.c9.io', {
         query: 'isClient=' + true + '&' + 'sysInfo=' + JSON.stringify(sysInfo)
     });
 
