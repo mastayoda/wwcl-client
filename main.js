@@ -995,8 +995,9 @@ function buildToolTip(sdbx, isTableTooltip) {
             "<br>" +
             "<br>";
     }
+    console.log(sdbx);
 
-    if (sdbx.isNodeJS)
+    if (sdbx.sysInfo.isNodeJS)
         content += "<ul>" +
         "<li>" + "<img src='" + img + "'/>" + "</li>" +
         "<li>" + "<b>CPU:</b> " + sdbx.sysInfo.cpu.model + " x " + sdbx.sysInfo.cpu.cores + "</li>" +
