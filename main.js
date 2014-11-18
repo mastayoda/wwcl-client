@@ -925,9 +925,11 @@ function updateDashBoard(sdbx, isAdding) {
     var oneGB = 1000000000;
 
     if (isAdding) {
+       
         lblSandBoxNum.html(Number(lblSandBoxNum.html()) + 1);
         lblFlops.html(Number(lblFlops.html()) + sdbx.sysInfo.flops);
-        if (sdbx.isNodeJS)
+        
+        if (sdbx.sysInfo.isNodeJS)
             lblMemory.html((Number(lblMemory.html()) + sdbx.sysInfo.totalmem / oneGB).toFixed(2));
 
         if (sdbx.sysInfo.isNodeJS) {
