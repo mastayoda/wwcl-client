@@ -927,7 +927,7 @@ function updateDashBoard(sdbx, isAdding) {
     if (isAdding) {
        
         lblSandBoxNum.html(Number(lblSandBoxNum.html()) + 1);
-        lblFlops.html(Number(lblFlops.html()) + sdbx.sysInfo.flops);
+        lblFlops.html((Number(lblFlops.html()) + sdbx.sysInfo.flops).toFixed(2));
         
         if (sdbx.sysInfo.isNodeJS)
             lblMemory.html((Number(lblMemory.html()) + sdbx.sysInfo.totalmem / oneGB).toFixed(2));
@@ -961,7 +961,7 @@ function updateDashBoard(sdbx, isAdding) {
 
     } else {
         lblSandBoxNum.html(Number(lblSandBoxNum.html()) - 1);
-        lblFlops.html(Number(lblFlops.html()) - sdbx.sysInfo.flops);
+        lblFlops.html((Number(lblFlops.html()) - sdbx.sysInfo.flops).toFixed(2));
         lblMemory.html((Number(lblMemory.html()) - sdbx.sysInfo.totalmem / oneGB).toFixed(2));
 
         if (sdbx.sysInfo.isNodeJS)
@@ -1007,14 +1007,14 @@ function buildToolTip(sdbx, isTableTooltip) {
         "<li>" + "<b>Memory:</b> " + (sdbx.sysInfo.totalmem / 1000000000).toFixed(2) + " GB</li>" +
         "<li>" + "<b>Platform:</b> " + sdbx.sysInfo.platform + "</li>" +
         "<li>" + "<b>OS:</b> " + sdbx.sysInfo.type + " </li>" +
-        "<li>" + "<b>FLOPS:</b> " + (sdbx.sysInfo.flops / 1000000000).toFixed(2) + " GFLOPS</li>" +
+        "<li>" + "<b>FLOPS:</b> " + sdbx.sysInfo.flops + " GFLOPS</li>" +
         "<ul>";
     else
         content += "<ul>" +
         "<li>" + "<img src='" + img + "'/>" + "</li>" +
         "<li>" + "<b>Browser:</b> " + sdbx.sysInfo.browserInfo[0] + " " + sdbx.sysInfo.browserInfo[1] + "</li>" +
         "<li>" + "<b>Platform:</b> " + sdbx.sysInfo.platform + "</li>" +
-        "<li>" + "<b>FLOPS:</b> " + (sdbx.sysInfo.flops / 1000000000).toFixed(2) + " GFLOPS</li>" +
+        "<li>" + "<b>FLOPS:</b> " + sdbx.sysInfo.flops + " GFLOPS</li>" +
         "<ul>";
 
 
