@@ -198,7 +198,7 @@ $(document).ready(function() {
         editWin.selectedJob = selectedJob;
         editWin.refWin = window;
 
-        /* This function will be called from the code 
+        /* This function will be called from the code
          * editor window context.
          */
         editWin.saveJobCode = function(code) {
@@ -362,8 +362,10 @@ function DeployJob() {
 
         /* Object for the whole job */
         var jobObj = {}
-        jobObj.clientSocketId = socketSessionID;
         jobObj.sdbxs = [];
+        /* Partitioning variable, used to track the partitioning index range*/
+        var partitiningIndex = 0;
+        jobObj.clientSocketId = socketSessionID;
 
         /* Extracting job dialog variables */
         var totalFlops = 0;
@@ -375,6 +377,20 @@ function DeployJob() {
         var dspnTopoSdbxCount = $("#dspnTopoSdbxCount");
         var dspnTopoFLOPS = $("#dspnTopoFLOPS");
 
+        /* Calculating the FLOPS and building sadboxes array */
+        for (var i = 0; i < selectedTopology.sdbxs.length; i++) {
+            if (selectedTopology.sdbxs[i].isPresent) {
+
+                totalFlops += avlbSandBoxes[selectedTopology.sdbxs[i].id].sysInfo.pFlops;
+                selectedTopology.sdbxs[i].pFlops = avlbSandBoxes[selectedTopology.sdbxs[i].id].sysInfo.pFlops;
+            }
+        }
+
+        /* Sort Array descending by flops(faster sandboxes first) */
+        if(selectedJob.code.isPartitioned) {
+            selectedTopology.sdbxs.sort(sandboxSortArrayByFlops);
+            var partitioningData = eval(selectedJob.code.paramsAndData);
+        }
 
         /* Calculating total flops and sandboxes for the job*/
         for (var i = 0; i < selectedTopology.sdbxs.length; i++) {
@@ -383,15 +399,35 @@ function DeployJob() {
                 var sdbxObj = {};
                 sdbxObj.clientSocketId = jobObj.clientSocketId;
                 sdbxObj.sandboxSocketId = selectedTopology.sdbxs[i].id;
-                sdbxObj.jobCode = selectedJob.code;
 
-                /* Adding to the job's sandbox array */
-                jobObj.sdbxs.push(sdbxObj);
+                /* If data is partitioned, balance data assignment */
+                if(selectedJob.code.isPartitioned)
+                {
+                    sdbxObj.jobCode = selectedJob.code;
 
-                /* Calculating flops */
-                totalFlops += avlbSandBoxes[selectedTopology.sdbxs[i].id].sysInfo.flops;
+                    /* Weighting sandbox data distribution by flops capacity */
+                    var weight = Math.ceil(selectedTopology.sdbxs[i].pFlops/totalFlops * partitioningData.length);
+                    /* Partitioning */
+                    sdbxObj.jobCode.paramsAndData = JSON.stringify(partitioningData.slice(partitiningIndex,partitiningIndex + weight));
+
+                    /* Adding the sandbox */
+                    jobObj.sdbxs.push(sdbxObj);
+
+                    /* Deciding if continue or done with partitioning */
+                    if(partitioningData.length  - (partitiningIndex + weight)> 0)
+                        partitiningIndex += weight;
+                    else
+                        break;
+                }
+                else /* Just assign the data and push the sandbox */
+                {
+                    sdbxObj.jobCode = selectedJob.code;
+                    /* Adding to the job's sandbox array */
+                    jobObj.sdbxs.push(sdbxObj);
+                }
             }
         }
+
         /* Setting dialog text */
         dspnJobName.html(selectedJob.name);
         dspnJobDataPld.html(JSON.stringify(selectedJob.code.paramsAndData).length + " bytes");
@@ -401,8 +437,7 @@ function DeployJob() {
         dspnTopoSdbxCount.html(selectedTopology.presentCount);
         dspnTopoFLOPS.html(totalFlops + " GFLOPS");
 
-
-        window.jobObj = jobObj;
+        window.djobObj = jobObj;
 
         /* Display Dialog */
         $("#dialog-deploy-job").dialog({
@@ -411,10 +446,10 @@ function DeployJob() {
             buttons: {
                 "Yes": function() {
 
-                    executeDeployment(window.jobObj);
+                    executeDeployment(window.djobObj);
                     $(this).dialog("close");
                 },
-                Cancel: function() {
+                "Cancel": function() {
                     $(this).dialog("close");
                 }
             }
@@ -423,6 +458,15 @@ function DeployJob() {
     } else {
         showError("You must select a topology and a job before deploy.");
     }
+}
+
+function sandboxSortArrayByFlops(a,b)
+{
+    if (a.pFlops > b.pFlops)
+        return -1;
+    if (a.pFlops < b.pFlops)
+        return 1;
+    return 0;
 }
 
 function executeDeployment(jobObj) {
@@ -599,7 +643,6 @@ function showError(error) {
 }
 
 function showMessage(msg) {
-
     $("#msgText").html(msg);
     $("#dialogMsg").dialog({
         modal: false,
@@ -925,10 +968,10 @@ function updateDashBoard(sdbx, isAdding) {
     var oneGB = 1000000000;
 
     if (isAdding) {
-       
+
         lblSandBoxNum.html(Number(lblSandBoxNum.html()) + 1);
         lblFlops.html((Number(lblFlops.html()) + sdbx.sysInfo.flops).toFixed(2));
-        
+
         if (sdbx.sysInfo.isNodeJS)
             lblMemory.html((Number(lblMemory.html()) + sdbx.sysInfo.totalmem / oneGB).toFixed(2));
 
