@@ -102,11 +102,32 @@ $(document).ready(function() {
         }
 
         /* Validating the Parameter Object */
-      /*  if (!$("#chkTogleAfterBarrier").is(':checked') && paramOrData instanceof Array) {
-            showError("Arrays as <b>parameter</b> is only permited in partitioned mode, if the same array will be passed to all sandboxes, wrap it in a JSON object, Ex. { \"arr\": [1,2,3] }");
+        if ($("#chkPartitionData").is(':checked') && !(paramOrData instanceof Array) ) {
+            showError("Arrays as <b>parameter</b> is only permited in partitioned mode, if the same array will be passed to all sandboxes, wrap it in a JSON object, Eg. { \"arr\": [1,2,3] }");
             return;
         }
-        */
+
+        /* Validating the Parameter Object */
+        if (!$("#chkPartitionData").is(':checked') && (paramOrData instanceof Array) ) {
+            showError("Partitioned data requires an array as parameter. Eg. [1,2,3,4]");
+            return;
+        }
+
+        /* Partitioned Data Selected */
+        if ($("#chkPartitionData").is(':checked')) {
+
+            /* If not instance of Array */
+            if (!(paramOrData instanceof Array)) {
+                showError("Partitioning is selected, your <b>parameter</b> code must be an <b>Array</b>, remember that each element will be partitioned between Sandboxes.");
+                return;
+            } else if (paramOrData.length < 1) {
+                showError("Partitioning is selected, your <b>parameter</b> <b>Array</b> must contain at least one element.");
+                return;
+            }
+
+            isPartitioned = true;
+        }
+
 
         /* Validating Kernel Syntax */
         var err = check(kCode);
@@ -147,20 +168,6 @@ $(document).ready(function() {
             }
         }
 
-        /* Partitioned Data Selected */
-        if ($("#chkPartitionData").is(':checked')) {
-
-            /* If not instance of Array */
-            if (!(paramOrData instanceof Array)) {
-                showError("Partitioning is selected, your <b>parameter</b> code must be an <b>Array</b>, remember that each element will be partitioned between Sandboxes.");
-                return;
-            } else if (paramOrData.length < 1) {
-                showError("Partitioning is selected, your <b>parameter</b> <b>Array</b> must contain at least one element.");
-                return;
-            }
-
-            isPartitioned = true;
-        }
 
         /* Hidding result section */
         $("#divExecResults").hide();
@@ -184,27 +191,28 @@ $(document).ready(function() {
             "avFunc": avFunc
         };
 
-        /* Registering into the runnint sandboxes */
+        /* Global executing jobs array */
         executingSdbxs[sdbxReference.id] = sdbxReference;
 
         /* Adding reference to sandbox object */
         var params = {};
-        params.sdbxRef = sdbxReference;
 
         /* Executing the function */
         if(isPartitioned) {
             /* Execute with only one element */
+            params.sdbxRef = sdbxReference;
             params.data = paramOrData[0];
             /* Creating the SandBox*/
             var p = new Parallel(params);
-            p.map(func).then(testKernelResults);
+            p.spawn(func).then(testKernelResults);
         }
         else
         {
             /* Execute with only one element */
+            params.sdbxRef = sdbxReference;
             params.data = paramOrData;
             /* Creating the SandBox*/
-            var p = new Parallel(paramOrData);
+            var p = new Parallel(params);
             p.spawn(func).then(testKernelResults);
         }
 
@@ -289,6 +297,13 @@ $(document).ready(function() {
             $("#afterBarriertd").toggle();
             afterBarrierEditor.focus();
             kernelEditor.focus();
+
+            $("#chkTogleAfterBarrier").prop( "checked", true );
+        }
+
+        if(selectedJob.code.isPartitioned)
+        {
+            $("#chkPartitionData").prop( "checked", true );
         }
 
         if (selectedJob.code.isExample)
@@ -484,6 +499,13 @@ function loadExternalCode(jobCode) {
     window.kernelEditor.setValue(window.selectedJob.code.kernelCode);
     window.paramsEditor.setValue(window.selectedJob.code.paramsAndData);
     window.afterBarrierEditor.setValue(window.selectedJob.code.afterBarrierCode);
+
+    if(window.selectedJob.code.hasAfterBarrier)
+        window.$("#chkTogleAfterBarrier").prop( "checked", true );
+
+    if(window.selectedJob.code.isPartitioned)
+        window.$("#chkPartitionData").prop( "checked", true );
+
 
     if (window.selectedJob.code.isExample)
         window.formatExample();

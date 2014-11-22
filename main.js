@@ -413,7 +413,7 @@ function DeployJob() {
                     var weight = Math.ceil(selectedTopology.sdbxs[i].pFlops/totalFlops * partitioningData.length);
                     /* Partitioning */
                     sdbxObj.jobCode.paramsAndData = JSON.stringify(partitioningData.slice(partitiningIndex,partitiningIndex + weight));
-
+                    sdbxObj.jobCode.pRange = [partitiningIndex, partitiningIndex + sdbxObj.jobCode.paramsAndData.length];
                     /* Adding the sandbox */
                     jobObj.sdbxs.push(sdbxObj);
 
@@ -1108,7 +1108,6 @@ function addSandBoxToMainTable(sdbx) {
     tblSdbxTable.row.add(data).draw();
 }
 
-function showSandBoxSpecs(row) {}
 
 function removeSandBoxFromMainTable(id) {
 
