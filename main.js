@@ -409,13 +409,12 @@ function DeployJob() {
 
         /* Create HashMap JobID -> result set, #sandbox, code barrier*/
         var rjobs = {};
-        rjobs.hasAfterBarrier = selectedJob.hasAfterBarrier;
-        if(selectedJob.hasAfterBarrier){
-            rjobs.afterBarrierCode = selectedJob.afterBarrierCode;
+        rjobs.hasAfterBarrier = selectedJob.code.hasAfterBarrier;
+        if(selectedJob.code.hasAfterBarrier){
+            rjobs.afterBarrierCode = selectedJob.code.afterBarrierCode;
         }
         rjobs.resultSet = [];
         rjobs.numSandbox = 0;
-        jobObj.jobId = chance.guid();
 
         /* Calculating total flops and sandboxes for the job*/
         for (var i = 0; i < selectedTopology.sdbxs.length; i++) {
@@ -786,24 +785,24 @@ function initializeSocketIO() {
         });
 
         /* Receive Job Results */
-        socket.on('jobExecutionResponse', function(results) {
-            console.log(results);
-            /* Descomentar cuando venga el jobID en results.
-            var rjobs = window.runningJobs[results.jobId];
+        socket.on('jobExecutionResponse', function(results) {                    
+            var rjobs = window.runningJobs[results.jobId];                        
             rjobs.resultSet.push(results.result);
             rjobs.numSandbox--;
-            if(rjobs.numSandbox == 0){
+            if(rjobs.numSandbox == 0){                
                 if(rjobs.hasAfterBarrier){
-                    resultsArr = rjobs.resultSet;
-                    eval(rjobs.afterBarrierCode);
+                    resultsArr = rjobs.resultSet;                    
+                    eval(rjobs.afterBarrierCode);                    
+                    showAlert("The Results Arrived!", result.context + JSON.stringify(result.result), false);
                 }
                 else{
                     result = rjobs.resultSet;
+                    showAlert("The Results Arrived!", JSON.stringify(result), false);
                 }
-                showAlert("The Results Arrived!", result, false);
+                result.jobId = results.jobId;                                
                 console.log(result);
                 delete rjobs;
-            }*/
+            }
 
         });
 
