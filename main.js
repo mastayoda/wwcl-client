@@ -377,6 +377,7 @@ function DeployJob() {
         /* Partitioning variable, used to track the partitioning index range*/
         var partitiningIndex = 0;
         jobObj.clientSocketId = socketSessionID;
+        jobObj.jobId = chance.guid();
 
         /* Extracting job dialog variables */
         var totalFlops = 0;
