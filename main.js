@@ -266,7 +266,6 @@ $(document).ready(function() {
     /*Global Variables */
     window.selectedJob = {};
     window.selectedTopology = null;
-    window.socketSessionID;
     window.editWin = null;
     window.isEditorWinOpen = false;
 
@@ -284,6 +283,16 @@ $(document).ready(function() {
 });
 
 function loadExamples() {
+
+
+    /* TODO: create example storage mechanism
+    localStorage = require('localStorage');
+    exampleJobsArr = localStorage.getItem("topologies");
+    if (exampleJobsArr != null)
+        exampleJobsArr = JSON.parse(topologiesArr);
+    else
+        exampleJobsArr = [];
+    */
 
     /* Instantiate the json requester */
     window.jsonClient = require('request-json').newClient('https://raw.githubusercontent.com/mastayoda/wwcl-examples/master/');
@@ -362,7 +371,7 @@ function DeployJob() {
     if (selectedJob.name && selectedTopology) {
 
         /* Object for the whole job */
-        var chance = require('chance').Chance();		
+        var chance = require('chance').Chance();
         var jobObj = {};
         jobObj.sdbxs = [];
         /* Partitioning variable, used to track the partitioning index range*/
@@ -396,15 +405,16 @@ function DeployJob() {
             var codeObj = $.extend({},selectedJob.code);
             codeObj.paramsAndData = {};
         }
-		
+
         /* Create HashMap JobID -> result set, #sandbox, code barrier*/
-        var rjobs = {};		
+        var rjobs = {};
         rjobs.hasAfterBarrier = selectedJob.hasAfterBarrier;
         if(selectedJob.hasAfterBarrier){
             rjobs.afterBarrierCode = selectedJob.afterBarrierCode;
         }
         rjobs.resultSet = [];
         rjobs.numSandbox = 0;
+        jobObj.jobId = chance.guid();
 
         /* Calculating total flops and sandboxes for the job*/
         for (var i = 0; i < selectedTopology.sdbxs.length; i++) {
@@ -414,7 +424,7 @@ function DeployJob() {
                 sdbxObj.clientSocketId = jobObj.clientSocketId;
                 sdbxObj.sandboxSocketId = selectedTopology.sdbxs[i].id;
                 sdbxObj.jobId = jobObj.jobId;
-				
+
                 /*Set #sandbox to wait for*/
                 rjobs.numSandbox++;
 
@@ -446,7 +456,7 @@ function DeployJob() {
                 }
             }
         }
-		
+
         /*Set HashMap*/
         window.runningJobs[jobObj.jobId] = rjobs;
 
@@ -783,8 +793,8 @@ function initializeSocketIO() {
             rjobs.numSandbox--;
             if(rjobs.numSandbox == 0){
                 if(rjobs.hasAfterBarrier){
-                    resultsArr = rjobs.resultSet;					
-                    eval(rjobs.afterBarrierCode);				
+                    resultsArr = rjobs.resultSet;
+                    eval(rjobs.afterBarrierCode);
                 }
                 else{
                     result = rjobs.resultSet;
@@ -793,7 +803,7 @@ function initializeSocketIO() {
                 console.log(result);
                 delete rjobs;
             }*/
-			
+
         });
 
         /* Receive Job Results */

@@ -32,6 +32,7 @@
     "localStorage": "^1.0.3",
     "paralleljs": "0.2.1",
     "request-json": "0.5.0",
-    "syntax-error": "1.1.1"
+    "syntax-error": "1.1.1",
+    "chance": "^0.6.1"
   }
 }
