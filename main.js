@@ -390,6 +390,9 @@ function DeployJob() {
         if(selectedJob.code.isPartitioned) {
             selectedTopology.sdbxs.sort(sandboxSortArrayByFlops);
             var partitioningData = eval(selectedJob.code.paramsAndData);
+            /* Copying object */
+            var codeObj = $.extend({},selectedJob.code);
+            codeObj.paramsAndData = {};
         }
 
         /* Calculating total flops and sandboxes for the job*/
@@ -403,7 +406,8 @@ function DeployJob() {
                 /* If data is partitioned, balance data assignment */
                 if(selectedJob.code.isPartitioned)
                 {
-                    sdbxObj.jobCode = selectedJob.code;
+                    /* Copying the plain object */
+                    sdbxObj.jobCode = $.extend({},codeObj);
 
                     /* Weighting sandbox data distribution by flops capacity */
                     var weight = Math.ceil(selectedTopology.sdbxs[i].pFlops/totalFlops * partitioningData.length);
