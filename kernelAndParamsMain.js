@@ -89,6 +89,7 @@ $(document).ready(function() {
         var kCode = kernelEditor.getValue().trim();
         var pCode = paramsEditor.getValue().trim();
         var avCode = afterBarrierEditor.getValue().trim();
+        var isPartitioned = false;
         var func = '',
             avFunc = '';
 
@@ -101,10 +102,32 @@ $(document).ready(function() {
         }
 
         /* Validating the Parameter Object */
-        if (!$("#chkTogleAfterBarrier").is(':checked') && paramOrData instanceof Array) {
-            showError("Arrays as <b>parameter</b> is only permited in partitioned mode, if the same array will be passed to all sandboxes, wrap it in a JSON object, Ex. { \"arr\": [1,2,3] }");
+        if ($("#chkPartitionData").is(':checked') && !(paramOrData instanceof Array) ) {
+            showError("Arrays as <b>parameter</b> is only permited in partitioned mode, if the same array will be passed to all sandboxes, wrap it in a JSON object, Eg. { \"arr\": [1,2,3] }");
             return;
         }
+
+        /* Validating the Parameter Object */
+        if (!$("#chkPartitionData").is(':checked') && (paramOrData instanceof Array) ) {
+            showError("Partitioned data requires an array as parameter. Eg. [1,2,3,4]");
+            return;
+        }
+
+        /* Partitioned Data Selected */
+        if ($("#chkPartitionData").is(':checked')) {
+
+            /* If not instance of Array */
+            if (!(paramOrData instanceof Array)) {
+                showError("Partitioning is selected, your <b>parameter</b> code must be an <b>Array</b>, remember that each element will be partitioned between Sandboxes.");
+                return;
+            } else if (paramOrData.length < 1) {
+                showError("Partitioning is selected, your <b>parameter</b> <b>Array</b> must contain at least one element.");
+                return;
+            }
+
+            isPartitioned = true;
+        }
+
 
         /* Validating Kernel Syntax */
         var err = check(kCode);
@@ -145,6 +168,7 @@ $(document).ready(function() {
             }
         }
 
+
         /* Hidding result section */
         $("#divExecResults").hide();
         $("#imgLoading").show();
@@ -167,99 +191,30 @@ $(document).ready(function() {
             "avFunc": avFunc
         };
 
-        /* Registering into the runnint sandboxes */
+        /* Global executing jobs array */
         executingSdbxs[sdbxReference.id] = sdbxReference;
 
         /* Adding reference to sandbox object */
-        paramOrData.sdbxRef = sdbxReference;
-
-        /* Creating the SandBox*/
-        var p = new Parallel(paramOrData);
+        var params = {};
 
         /* Executing the function */
-        p.spawn(func).then(function(execResults) {
-
-            /* if results from kernel function is undefined
-             * something went terrible wrong, return
-             */
-            if (execResults == undefined) {
-
-                $("#spnResults").html("Kernel function returned undefined, please double check your code and remember that return statements are not allowed.");
-                $("#results").dialog({
-                    modal: false,
-                    buttons: {
-                        Ok: function() {
-                            $(this).dialog("close");
-                        }
-                    }
-                });
-                return;
-            }
-
-            /* Getting the sandbox Reference */
-            var sdbxRef = execResults.sdbxRef;
-            /* Reasigning the results */
-            var result = execResults.result;
-
-            /* If After Barrier Function, execute it */
-            if (sdbxRef.hasAfterBarrier) {
-                result = executingSdbxs[sdbxRef.id].avFunc([result]);
-                /* if results from barrief function is undefined
-                 * something went terrible wrong, return
-                 */
-                if (result == undefined) {
-
-                    /* Stop timer and reset*/
-                    window.clearInterval(window.timer);
-                    $("#spnTimer").html("0");
-
-                    /* Hidding wait and show results section */
-                    $("#spnResults").html("After Barrier function returned undefined, please double check your code and remember that return statements are not allowed.");
-                    $("#divExecResults").show();
-                    $("#imgLoading").hide();
-
-                    $("#results").dialog({
-                        modal: false,
-                        buttons: {
-                            Ok: function() {
-                                $(this).dialog("close");
-                            }
-                        }
-                    });
-                    return;
-                }
-            }
-
-            /* Stop timer and reset*/
-            window.clearInterval(window.timer);
-            $("#spnTimeElapsed").html($("#spnTimer").html());
-            $("#spnTimer").html("0");
-            /* Hidding wait and show results section */
-            $("#divExecResults").show();
-            $("#imgLoading").hide();
-
-            /* If barrier, show this results */
-            if (sdbxRef.hasAfterBarrier) {
-                /* If not error ocurred */
-                if (result.e == "")
-                    $("#spnResults").html(JSON.stringify(result.r));
-                else
-                    $("#spnResults").html(result.e + " : " + JSON.stringify(result.r));
-
-            } /* if not barrier, show straigth results */
-            else {
-                $("#spnResults").html(JSON.stringify(result));
-            }
-
-            $("#results").dialog({
-                modal: false,
-                buttons: {
-                    Ok: function() {
-                        $(this).dialog("close");
-                    }
-                }
-            });
-        });
+        if(isPartitioned) {
+            /* Execute with only one element */
+            params.sdbxRef = sdbxReference;
+            params.data = paramOrData[0];
+            /* Creating the SandBox*/
+            var p = new Parallel(params);
+            p.spawn(func).then(testKernelResults);
+        }
+        else
+        {
+            /* Execute with only one element */
+            params.sdbxRef = sdbxReference;
+            params.data = paramOrData;
+            /* Creating the SandBox*/
+            var p = new Parallel(params);
+            p.spawn(func).then(testKernelResults);
+        }
 
         /* timer to monitor execution time */
         window.timer = setInterval(function() {
@@ -336,12 +291,19 @@ $(document).ready(function() {
         kernelEditor.setValue(selectedJob.code.kernelCode);
         paramsEditor.setValue(selectedJob.code.paramsAndData);
         afterBarrierEditor.setValue(selectedJob.code.afterBarrierCode);
-        
+
         if(selectedJob.code.hasAfterBarrier)
         {
             $("#afterBarriertd").toggle();
             afterBarrierEditor.focus();
             kernelEditor.focus();
+
+            $("#chkTogleAfterBarrier").prop( "checked", true );
+        }
+
+        if(selectedJob.code.isPartitioned)
+        {
+            $("#chkPartitionData").prop( "checked", true );
         }
 
         if (selectedJob.code.isExample)
@@ -356,6 +318,90 @@ $(document).ready(function() {
     });
 
 });
+
+function testKernelResults(execResults) {
+
+    /* if results from kernel function is undefined
+     * something went terrible wrong, return
+     */
+    if (execResults == undefined) {
+
+        $("#spnResults").html("Kernel function returned undefined, please double check your code and remember that return statements are not allowed.");
+        $("#results").dialog({
+            modal: false,
+            buttons: {
+                Ok: function() {
+                    $(this).dialog("close");
+                }
+            }
+        });
+        return;
+    }
+
+    /* Getting the sandbox Reference */
+    var sdbxRef = execResults.sdbxRef;
+    /* Reasigning the results */
+    var result = execResults.result;
+
+    /* If After Barrier Function, execute it */
+    if (sdbxRef.hasAfterBarrier) {
+        result = executingSdbxs[sdbxRef.id].avFunc([result]);
+        /* if results from barrief function is undefined
+         * something went terrible wrong, return
+         */
+        if (result == undefined) {
+
+            /* Stop timer and reset*/
+            window.clearInterval(window.timer);
+            $("#spnTimer").html("0");
+
+            /* Hidding wait and show results section */
+            $("#spnResults").html("After Barrier function returned undefined, please double check your code and remember that return statements are not allowed.");
+            $("#divExecResults").show();
+            $("#imgLoading").hide();
+
+            $("#results").dialog({
+                modal: false,
+                buttons: {
+                    Ok: function() {
+                        $(this).dialog("close");
+                    }
+                }
+            });
+            return;
+        }
+    }
+
+    /* Stop timer and reset*/
+    window.clearInterval(window.timer);
+    $("#spnTimeElapsed").html($("#spnTimer").html());
+    $("#spnTimer").html("0");
+    /* Hidding wait and show results section */
+    $("#divExecResults").show();
+    $("#imgLoading").hide();
+
+    /* If barrier, show this results */
+    if (sdbxRef.hasAfterBarrier) {
+        /* If not error ocurred */
+        if (result.e == "")
+            $("#spnResults").html(JSON.stringify(result.r));
+        else
+            $("#spnResults").html(result.e + " : " + JSON.stringify(result.r));
+
+    } /* if not barrier, show straigth results */
+    else {
+        $("#spnResults").html(JSON.stringify(result));
+    }
+
+    $("#results").dialog({
+        modal: false,
+        buttons: {
+            Ok: function() {
+                $(this).dialog("close");
+            }
+        }
+    });
+}
 
 function saveCode() {
 
@@ -453,6 +499,13 @@ function loadExternalCode(jobCode) {
     window.kernelEditor.setValue(window.selectedJob.code.kernelCode);
     window.paramsEditor.setValue(window.selectedJob.code.paramsAndData);
     window.afterBarrierEditor.setValue(window.selectedJob.code.afterBarrierCode);
+
+    if(window.selectedJob.code.hasAfterBarrier)
+        window.$("#chkTogleAfterBarrier").prop( "checked", true );
+
+    if(window.selectedJob.code.isPartitioned)
+        window.$("#chkPartitionData").prop( "checked", true );
+
 
     if (window.selectedJob.code.isExample)
         window.formatExample();

@@ -392,6 +392,9 @@ function DeployJob() {
         if(selectedJob.code.isPartitioned) {
             selectedTopology.sdbxs.sort(sandboxSortArrayByFlops);
             var partitioningData = eval(selectedJob.code.paramsAndData);
+            /* Copying object */
+            var codeObj = $.extend({},selectedJob.code);
+            codeObj.paramsAndData = {};
         }
 		
 		/* Create HashMap JobID -> result set, #sandbox, code barrier*/
@@ -418,13 +421,14 @@ function DeployJob() {
                 /* If data is partitioned, balance data assignment */
                 if(selectedJob.code.isPartitioned)
                 {
-                    sdbxObj.jobCode = selectedJob.code;
+                    /* Copying the plain object */
+                    sdbxObj.jobCode = $.extend({},codeObj);
 
                     /* Weighting sandbox data distribution by flops capacity */
                     var weight = Math.ceil(selectedTopology.sdbxs[i].pFlops/totalFlops * partitioningData.length);
                     /* Partitioning */
                     sdbxObj.jobCode.paramsAndData = JSON.stringify(partitioningData.slice(partitiningIndex,partitiningIndex + weight));
-
+                    sdbxObj.jobCode.pRange = [partitiningIndex, partitiningIndex + sdbxObj.jobCode.paramsAndData.length];
                     /* Adding the sandbox */
                     jobObj.sdbxs.push(sdbxObj);
 
@@ -1139,7 +1143,6 @@ function addSandBoxToMainTable(sdbx) {
     tblSdbxTable.row.add(data).draw();
 }
 
-function showSandBoxSpecs(row) {}
 
 function removeSandBoxFromMainTable(id) {
 
