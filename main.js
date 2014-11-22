@@ -397,14 +397,14 @@ function DeployJob() {
             codeObj.paramsAndData = {};
         }
 		
-		/* Create HashMap JobID -> result set, #sandbox, code barrier*/
-		var rjobs = {};		
-		rjobs.hasAfterBarrier = selectedJob.hasAfterBarrier;
-		if(selectedJob.hasAfterBarrier){
-			rjobs.afterBarrierCode = selectedJob.afterBarrierCode;
-		}
-		rjobs.resultSet = [];
-		rjobs.numSandbox = 0;
+        /* Create HashMap JobID -> result set, #sandbox, code barrier*/
+        var rjobs = {};		
+        rjobs.hasAfterBarrier = selectedJob.hasAfterBarrier;
+        if(selectedJob.hasAfterBarrier){
+            rjobs.afterBarrierCode = selectedJob.afterBarrierCode;
+        }
+        rjobs.resultSet = [];
+        rjobs.numSandbox = 0;
 
         /* Calculating total flops and sandboxes for the job*/
         for (var i = 0; i < selectedTopology.sdbxs.length; i++) {
@@ -413,10 +413,10 @@ function DeployJob() {
                 var sdbxObj = {};
                 sdbxObj.clientSocketId = jobObj.clientSocketId;
                 sdbxObj.sandboxSocketId = selectedTopology.sdbxs[i].id;
-				sdbxObj.jobId = jobObj.jobId;
+                sdbxObj.jobId = jobObj.jobId;
 				
-				/*Set #sandbox to wait for*/
-				rjobs.numSandbox++;
+                /*Set #sandbox to wait for*/
+                rjobs.numSandbox++;
 
                 /* If data is partitioned, balance data assignment */
                 if(selectedJob.code.isPartitioned)
@@ -447,8 +447,8 @@ function DeployJob() {
             }
         }
 		
-		/*Set HashMap*/
-		window.runningJobs[jobObj.jobId] = rjobs;
+        /*Set HashMap*/
+        window.runningJobs[jobObj.jobId] = rjobs;
 
         /* Setting dialog text */
         dspnJobName.html(selectedJob.name);
@@ -777,22 +777,22 @@ function initializeSocketIO() {
         /* Receive Job Results */
         socket.on('jobExecutionResponse', function(results) {
             console.log(results);
-			/* Descomentar cuando venga el jobID en results.
-			var rjobs = window.runningJobs[results.jobId];
-			rjobs.resultSet.push(results.result);
-			rjobs.numSandbox--;
-			if(rjobs.numSandbox == 0){
-				if(rjobs.hasAfterBarrier){
-					resultsArr = rjobs.resultSet;					
-					eval(rjobs.afterBarrierCode);				
-				}
-				else{
-					result = rjobs.resultSet;
-				}
-				showAlert("The Results Arrived!", result, false);
-				console.log(result);
-				delete rjobs;
-			}*/
+            /* Descomentar cuando venga el jobID en results.
+            var rjobs = window.runningJobs[results.jobId];
+            rjobs.resultSet.push(results.result);
+            rjobs.numSandbox--;
+            if(rjobs.numSandbox == 0){
+                if(rjobs.hasAfterBarrier){
+                    resultsArr = rjobs.resultSet;					
+                    eval(rjobs.afterBarrierCode);				
+                }
+                else{
+                    result = rjobs.resultSet;
+                }
+                showAlert("The Results Arrived!", result, false);
+                console.log(result);
+                delete rjobs;
+            }*/
 			
         });
 
