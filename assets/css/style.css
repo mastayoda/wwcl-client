@@ -175,7 +175,7 @@ a, a:hover, a:focus {
 #editors-content{
     margin-left: 20%;
     float: right;
-    width: 80%;  
+    width: 80%;
 }
 
 #editors-sidebar{
@@ -207,6 +207,11 @@ a, a:hover, a:focus {
     text-align: center;
 }
 
+#divSaveBtn
+{
+    text-align: center;
+}
+
 #kernelTable
 {
     width: 100%;
@@ -219,6 +224,26 @@ a, a:hover, a:focus {
 
 #btnTestKernel{
     margin-top: -5px;
+}
+
+#runningJobinfoTable
+{
+    font-size: 14pt;
+
+}
+#runningJobinfoTable tr
+ {
+     padding: 10px;
+ }
+
+#runningJobinfoTable td
+{
+    padding-right: 5px;
+}
+
+#runningJobinfoTable td:first-child + td {
+
+    font-weight: bold;
 }
 
 ul.top-menu > li > .save {
@@ -456,7 +481,7 @@ ul.sidebar-menu li ul.sub li.active a {
 }
 ul.sidebar-menu li {
     /*line-height: 20px !important;*/
-    
+
     margin-bottom: 5px;
     margin-left: 10px;
     margin-right: 10px;
@@ -602,7 +627,7 @@ ul.top-menu > li > a:hover, ul.top-menu > li > a:focus {
 }
 @media screen and (-webkit-min-device-pixel-ratio: 0) {
     /* Safari and Chrome */
-    
+
     .dropdown-menu.extended {
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.176) !important;
     }
@@ -2045,7 +2070,7 @@ label {
 }
 @media screen and (-webkit-min-device-pixel-ratio: 0) {
     /* Safari and Chrome */
-    
+
     .panel-footer.revenue-foot {
         margin-bottom: -4px;
     }

@@ -374,6 +374,7 @@ function DeployJob() {
         var chance = require('chance').Chance();
         var jobObj = {};
         jobObj.sdbxs = [];
+        jobObj.name = selectedJob.name;
         /* Partitioning variable, used to track the partitioning index range*/
         var partitiningIndex = 0;
         jobObj.clientSocketId = socketSessionID;
@@ -479,8 +480,27 @@ function DeployJob() {
             buttons: {
                 "Yes": function() {
 
+                    var resWin = window.open('runningJob.html', {
+                        "position": "right",
+                        "height": 535,
+                        "width": 415,
+                        "focus": true,
+                        "toolbar": false,
+                        "frame": false,
+                        "resizable": false
+                    });
+
+                    /* Setting selected job into the new window */
+                    window.djobObj.startTime = new Date();
+                    resWin.job = window.djobObj;
+                    resWin.refWin = window;
+
+                    /* Adding Window Reference to the window */
+                    window.runningJobs[jobObj.jobId].resWin = resWin;
+
                     executeDeployment(window.djobObj);
                     $(this).dialog("close");
+
                 },
                 "Cancel": function() {
                     $(this).dialog("close");
