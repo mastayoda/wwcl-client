@@ -191,7 +191,7 @@ $(document).ready(function() {
             "focus": true,
             "toolbar": false,
             "frame": false,
-            "resizable": false,
+            "resizable": false
         });
 
         /* Setting selected job into the new window */
@@ -497,6 +497,7 @@ function DeployJob() {
 
                     /* Adding Window Reference to the window */
                     window.runningJobs[jobObj.jobId].resWin = resWin;
+                    window.runningJobs[jobObj.jobId].name = window.djobObj.name;
 
                     executeDeployment(window.djobObj);
                     $(this).dialog("close");
@@ -810,16 +811,24 @@ function initializeSocketIO() {
             var rjobs = window.runningJobs[results.jobId];
             rjobs.resultSet.push(results.result);
             rjobs.numSandbox--;
+
+            /* Updating corresponding result window */
+            rjobs.resWin.changeReceived(1);
+            rjobs.resWin.changePending(-1);
+
             if(rjobs.numSandbox == 0){
                 if(rjobs.hasAfterBarrier){
 
                     var result = runAfterBarrier(rjobs);
-                    //eval(rjobs.afterBarrierCode);
-                    showAlert("The Results Arrived!", results.jobId + JSON.stringify(result), true);
+                    showAlert("Job Done!",rjobs.name + " complete, verify result window." , true);
+                    rjobs.resWin.jobCompleted(result);
+                    rjobs.resWin.focus();
                 }
                 else{
                     result = rjobs.resultSet;
-                    showAlert("The Results Arrived!", JSON.stringify(result), true);
+                    showAlert("Job Done!",rjobs.name + " complete, verify result window." , true);
+                    rjobs.resWin.jobCompleted(result);
+                    rjobs.resWin.focus();
                 }
                 result.jobId = results.jobId;
                 console.log(result);
