@@ -458,6 +458,7 @@ function DeployJob() {
         }
 
         /*Set HashMap*/
+        rjobs.isPartitioned = selectedJob.code.isPartitioned;
         window.runningJobs[jobObj.jobId] = rjobs;
 
         /* Setting dialog text */
@@ -785,21 +786,22 @@ function initializeSocketIO() {
         });
 
         /* Receive Job Results */
-        socket.on('jobExecutionResponse', function(results) {                    
-            var rjobs = window.runningJobs[results.jobId];                        
+        socket.on('jobExecutionResponse', function(results) {
+            var rjobs = window.runningJobs[results.jobId];
             rjobs.resultSet.push(results.result);
             rjobs.numSandbox--;
-            if(rjobs.numSandbox == 0){                
+            if(rjobs.numSandbox == 0){
                 if(rjobs.hasAfterBarrier){
-                    resultsArr = rjobs.resultSet;                    
-                    eval(rjobs.afterBarrierCode);                    
-                    showAlert("The Results Arrived!", result.context + JSON.stringify(result.result), false);
+
+                    var result = runAfterBarrier(rjobs);
+                    //eval(rjobs.afterBarrierCode);
+                    showAlert("The Results Arrived!", results.jobId + JSON.stringify(result), true);
                 }
                 else{
                     result = rjobs.resultSet;
-                    showAlert("The Results Arrived!", JSON.stringify(result), false);
+                    showAlert("The Results Arrived!", JSON.stringify(result), true);
                 }
-                result.jobId = results.jobId;                                
+                result.jobId = results.jobId;
                 console.log(result);
                 delete rjobs;
             }
@@ -817,6 +819,36 @@ function initializeSocketIO() {
         socket.emit("requestSocketID");
 
     });
+}
+
+function runAfterBarrier(job)
+{
+    try {
+        var resultArr = [];
+
+        if(job.isPartitioned)
+        {
+            /* If partitioned clean results into regular array */
+            for(var i =0;i<job.resultSet.length;i++)
+            {
+                for(var j =0;j<job.resultSet[i].length;j++)
+                {
+                    resultArr.push(job.resultSet[i][j].result);
+                }
+            }
+
+        }
+        else /* Just pass the collected results */
+            resultArr = job.resultSet;
+
+        /* Building function */
+        var avFunc = eval("b=function(resultsArr){var resultbkp=resultsArr.slice(0);var result='';try{" + job.afterBarrierCode + "}catch(ex){return{\"e\":'Error Ocurred, Returning previous data(resultArr).'+ex.toString(),\"r\":resultbkp}}if(result==='')return{\"e\":'result variable not set! Returning previous data(resultArr).',\"r\":resultbkp};else return{\"e\":'',\"r\":result};}");
+        var result =  avFunc(resultArr);
+        return result;
+    } catch (ex) {
+        showError("Your <b>After Barrier</b> code is not valid, please make corrections and try again.\n\n" + ex);
+        return job.resultSet;
+    }
 }
 
 function exitClient() {
