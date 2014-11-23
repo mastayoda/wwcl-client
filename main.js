@@ -312,6 +312,8 @@ function loadExamples() {
                 job.code.afterBarrierCode = rawJob.afBarrFunc;
                 job.code.hasAfterBarrier = rawJob.hasAftBarr;
                 job.code.isPartitioned = rawJob.isPartitioned;
+                job.code.hasContext = rawJob.hasContext;
+                job.code.context = rawJob.context;
                 job.code.kernelCode = rawJob.kernel;
                 job.code.paramsAndData = JSON.stringify(rawJob.params);
 
@@ -459,7 +461,12 @@ function DeployJob() {
 
         /*Set HashMap*/
         rjobs.isPartitioned = selectedJob.code.isPartitioned;
-        window.runningJobs[jobObj.jobId] = rjobs;
+        rjobs.hasContext = selectedJob.code.hasContext;
+        if(selectedJob.code.hasContext){
+            rjobs.context = selectedJob.code.context;
+        }
+        
+        
 
         /* Setting dialog text */
         dspnJobName.html(selectedJob.name);
@@ -478,11 +485,14 @@ function DeployJob() {
             modal: true,
             buttons: {
                 "Yes": function() {
-
+                    var d = new Date();                    
+                    rjobs.startTime = d.getTime();
+                    window.runningJobs[jobObj.jobId] = rjobs;
                     executeDeployment(window.djobObj);
                     $(this).dialog("close");
                 },
                 "Cancel": function() {
+                    delete rjobs;
                     $(this).dialog("close");
                 }
             }
@@ -788,21 +798,27 @@ function initializeSocketIO() {
         /* Receive Job Results */
         socket.on('jobExecutionResponse', function(results) {
             var rjobs = window.runningJobs[results.jobId];
+            console.log(results);
             rjobs.resultSet.push(results.result);
             rjobs.numSandbox--;
             if(rjobs.numSandbox == 0){
                 if(rjobs.hasAfterBarrier){
 
                     var result = runAfterBarrier(rjobs);
-                    //eval(rjobs.afterBarrierCode);
-                    showAlert("The Results Arrived!", results.jobId + JSON.stringify(result), true);
+                    //eval(rjobs.afterBarrierCode);         
                 }
                 else{
-                    result = rjobs.resultSet;
-                    showAlert("The Results Arrived!", JSON.stringify(result), true);
+                    result = rjobs.resultSet;     
+                }
+                if(rjobs.hasContext){
+                    showAlert("The Results Arrived!", "JobId: " +results.jobId + " "+ rjobs.context + JSON.stringify(result), true);
+                }
+                else{
+                    showAlert("The Results Arrived!", "JobId: " +results.jobId + " Results:" + JSON.stringify(result), true);
                 }
                 result.jobId = results.jobId;
                 console.log(result);
+                console.log(rjobs);
                 delete rjobs;
             }
 
