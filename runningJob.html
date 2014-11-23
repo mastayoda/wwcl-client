@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="">
+    <meta name="author" content="Victor O. Santos Uceta">
+    <meta name="keyword" content="Kernel, Parameters, Project, Parallel, WorldWideCluster">
+
+    <title>Running Job</title>
+
+    <!-- Bootstrap core CSS -->
+    <link href="assets/css/bootstrap.css" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" href="assets/lineicons/style.css">
+
+
+    <!-- Custom styles for this template -->
+    <link href="assets/css/style.css" rel="stylesheet">
+    <link href="assets/css/style-responsive.css" rel="stylesheet">
+
+</head>
+
+<body>
+
+    <section id="container">
+
+        <!--header start-->
+        <header class="header black-bg" style="-webkit-app-region: drag">
+            <!--logo start-->
+            <b class="logo" id="lblJobName"></b>
+            <!--logo end-->
+
+            <div class="top-menu" id="btnCloseDiv" style="display:none;">
+                <ul class="nav pull-right top-menu">
+                    <li><a class="logout" href="javascript:closeJobWindow();">Close</a>
+                    </li>
+                </ul>
+            </div>
+        </header>
+        <!--header end-->
+        <!--main content start-->
+        <section>
+            <section class="wrapper">
+                <!-- Start Main Table -->
+                <br>
+                <br>
+                <div id="imgLoading">
+                    <img id="gifLoading" src="assets/img/loadingbig.gif" />
+                    <img id="gifSave" src="assets/img/save.gif"  style="display:none;"/>
+                    <br>
+                    <br>
+                </div>
+                <table  id="runningJobinfoTable">
+                    <tr>
+                        <td>Job Name:</td>
+                        <td id="tdJobName"></td>
+                    </tr>
+                    <tr>
+                        <td>Start Time:</td>
+                        <td id="tdStartTime"></td>
+                    </tr>
+                    <tr>
+                        <td>Executing Time(secs):</td>
+                        <td id="tdExecTime">0</td>
+                    </tr>
+                    <tr>
+                        <td>Finish Time:</td>
+                        <td id="tdFinishTime">Waiting</td>
+                    </tr>
+                    <tr>
+                        <td>Running SandBoxes:</td>
+                        <td id="tdRunningSdbxs"></td>
+                    </tr>
+                    <tr>
+                        <td>Pending Results:</td>
+                        <td id="tdPending"></td>
+                    </tr>
+                    <tr>
+                        <td>Received Results:</td>
+                        <td id="tdReceived">0</td>
+                    </tr>
+                    <tr>
+                        <td>Error Results:</td>
+                        <td id="tdErrors">0</td>
+                    </tr>
+                    <tr>
+                        <td>Aborted Sandboxes:</td>
+                        <td id="tdAborted">0</td>
+                    </tr>
+                </table>
+                <div id="divSaveBtn" style="display:none;">
+                    <ul class="top-menu">
+                        <li style="width: 100%;"><a class="save" href="javascript:saveResults();">Save Results</a>
+                        </li>
+                    </ul>
+                    <input id="fileDialog"  style="display:none;"type="file" nwsaveas />
+                </div>
+
+            </section>
+        </section>
+    </section>
+
+    <!-- js placed at the end of the document so the pages load faster -->
+    <script src="assets/js/jquery.js"></script>
+    <script src="assets/js/jquery-1.8.3.min.js"></script>
+    <script src="assets/js/bootstrap.min.js"></script>
+    <script class="include" type="text/javascript" src="assets/js/jquery.dcjqaccordion.2.7.js"></script>
+    <script src="assets/js/jquery.scrollTo.min.js"></script>
+    <script src="assets/js/jquery.nicescroll.js" type="text/javascript"></script>
+    <script src="assets/js/jquery.sparkline.js"></script>
+
+    <!-- Data tables settings -->
+    <script src="assets/js/jquery-ui.js"></script>
+    <script src="assets/js/jquery.dataTables.min.js"></script>
+    <script src="assets/js/dataTables.jqueryui.js"></script>
+
+    <!--common script for all pages-->
+    <script src="assets/js/common-scripts.js"></script>
+
+    <script type="text/javascript" src="assets/js/gritter/js/jquery.gritter.js"></script>
+    <script type="text/javascript" src="assets/js/gritter-conf.js"></script>
+
+
+    <!--External jsHint, fold, and lint Script-->
+    <script src="runningJob.js"></script>
+
+</body>
+
+</html>
