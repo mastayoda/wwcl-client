@@ -28,13 +28,13 @@
   "author": "Victor Santos & Servio Palacios",
   "license": "MIT",
   "dependencies": {
-    "socket.io-client": "^1.2.0",
+    "chance": "^0.6.1",
     "localStorage": "^1.0.3",
+    "moment": "^2.8.4",
     "paralleljs": "0.2.1",
     "request-json": "0.5.0",
-    "syntax-error": "1.1.1",
-    "chance": "^0.6.1",
-    "moment": "^2.8.4",
-    "satelize": "^0.1.0"
+    "satelize": "^0.1.0",
+    "socket.io-client": "^1.2.0",
+    "syntax-error": "1.1.1"
   }
 }
