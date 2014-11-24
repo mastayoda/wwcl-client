@@ -1,5 +1,8 @@
 /* Wait for Document to Load */
-$(document).ready(function() {
+$(document).ready(function () {
+
+    /* Global Moment module */
+    window.moment = require('moment');
 
     /* Enabling Copy & Paste */
     var gui = require('nw.gui');
@@ -38,7 +41,7 @@ $(document).ready(function() {
         }
     });
 
-    $('#sandboxes tbody').on('click', 'tr', function() {
+    $('#sandboxes tbody').on('click', 'tr', function () {
         $(this).toggleClass('selected');
     });
     window.tblSlctSdbxTable = $('#Selectedsandboxes').DataTable({
@@ -48,15 +51,15 @@ $(document).ready(function() {
             "sEmptyTable": "No Sandboxes selected."
         }
     });
-    $('#Selectedsandboxes tbody').on('click', 'tr', function() {
+    $('#Selectedsandboxes tbody').on('click', 'tr', function () {
         $(this).toggleClass('selected');
     });
-    $("#btnAddToSelSdbx").button().click(function() {
+    $("#btnAddToSelSdbx").button().click(function () {
 
         transferSelectedSandBoxes();
 
     });
-    $("#btnSaveTopology").button().click(function() {
+    $("#btnSaveTopology").button().click(function () {
         addNewTopology();
         refreshTopologiesTable();
     });
@@ -64,7 +67,7 @@ $(document).ready(function() {
     /* Tooltip Section */
     $(document).tooltip({
         items: "[box-id], [top-name], [top-name-sdbx],[job-name], [ex-job-name]",
-        content: function() {
+        content: function () {
             var element = $(this);
 
             if (element.is("[box-id]")) {
@@ -113,7 +116,7 @@ $(document).ready(function() {
             "sRowSelect": "single"
         }
     });
-    $('#tblTopologies tbody').on('click', 'tr', function() {
+    $('#tblTopologies tbody').on('click', 'tr', function () {
 
         if ($(this).hasClass('selected')) {
             $(this).removeClass('selected');
@@ -137,7 +140,7 @@ $(document).ready(function() {
             "sEmptyTable": "No Jobs Created."
         }
     });
-    $('#tblJobs tbody').on('click', 'tr', function() {
+    $('#tblJobs tbody').on('click', 'tr', function () {
 
         if ($(this).hasClass('selected')) {
             $(this).removeClass('selected');
@@ -165,7 +168,7 @@ $(document).ready(function() {
             "sEmptyTable": "No Jobs Created."
         }
     });
-    $('#tblExampleJobs tbody').on('click', 'tr', function() {
+    $('#tblExampleJobs tbody').on('click', 'tr', function () {
         if ($(this).hasClass('selected')) {
             $(this).removeClass('selected');
         } else {
@@ -183,7 +186,7 @@ $(document).ready(function() {
                 editWin.loadExternalCode(getExJob(jobName));
         }
     });
-    $("#btnKernelAndParams").button().click(function() {
+    $("#btnKernelAndParams").button().click(function () {
 
         window.editWin = window.open('kernelAndParams.html', {
             "position": "right",
@@ -201,7 +204,7 @@ $(document).ready(function() {
         /* This function will be called from the code
          * editor window context.
          */
-        editWin.saveJobCode = function(code) {
+        editWin.saveJobCode = function (code) {
             parent.selectedJob.code = code;
             parent.setCodeIndicatorIcon(true);
             parent.isEditorWinOpen = false;
@@ -212,7 +215,7 @@ $(document).ready(function() {
 
     });
 
-    $("#btnCreateNewJob").button().click(function() {
+    $("#btnCreateNewJob").button().click(function () {
 
         showMessage("You are now in the Create New Job mode. Note that if a job is selected from the table, you will be editing that job instead of creating a new one.");
         /* Reinitializing Current Selected job object */
@@ -225,7 +228,7 @@ $(document).ready(function() {
         tblJobs.$('tr.selected').removeClass('selected');
     });
 
-    $("#btnSaveJob").button().click(function() {
+    $("#btnSaveJob").button().click(function () {
         SaveJob();
     });
 
@@ -235,7 +238,7 @@ $(document).ready(function() {
     var win = gui.Window.get();
 
     /* On close save data */
-    win.on('close', function() {
+    win.on('close', function () {
         /* Saving Topologies and Jobs back to localstorage */
         localStorage.setItem('topologies', JSON.stringify(topologiesArr));
         localStorage.setItem('jobs', JSON.stringify(savedJobsArr));
@@ -244,9 +247,20 @@ $(document).ready(function() {
     });
 
     /* On error Handling */
-    process.on("uncaughtException", function(e) {
+    process.on("uncaughtException", function (e) {
         showError("An Error Ocurred! If this persist please restart the client. " + e.toString());
     });
+
+    /* Update Sandbox table times */
+    setInterval(function () {
+
+        $("#sandboxes tbody tr" ).each(function () {
+           var sdbx =  avlbSandBoxes[this.children[0].innerHTML];
+            if(sdbx)
+                this.children[3].innerHTML = moment(sdbx.sysInfo.uptime).fromNow();
+        });
+
+    }, 3000);
 
     /* Extracting Dashboard Labels */
     window.lblSandBoxNum = $("#lblSandBoxNum");
@@ -261,7 +275,7 @@ $(document).ready(function() {
     window.slctTableArr = [];
     window.exampleJobsArr = [];
     window.savedJobsArr = [];
-	window.runningJobs = [];
+    window.runningJobs = [];
 
     /*Global Variables */
     window.selectedJob = {};
@@ -286,25 +300,25 @@ function loadExamples() {
 
 
     /* TODO: create example storage mechanism
-    localStorage = require('localStorage');
-    exampleJobsArr = localStorage.getItem("topologies");
-    if (exampleJobsArr != null)
-        exampleJobsArr = JSON.parse(topologiesArr);
-    else
-        exampleJobsArr = [];
-    */
+     localStorage = require('localStorage');
+     exampleJobsArr = localStorage.getItem("topologies");
+     if (exampleJobsArr != null)
+     exampleJobsArr = JSON.parse(topologiesArr);
+     else
+     exampleJobsArr = [];
+     */
 
     /* Instantiate the json requester */
     window.jsonClient = require('request-json').newClient('https://raw.githubusercontent.com/mastayoda/wwcl-examples/master/');
 
     /* Request JSON example index array */
-    jsonClient.get('exampleIndex.json', null, function(err, res, body) {
+    jsonClient.get('exampleIndex.json', null, function (err, res, body) {
 
         var exIndexArr = body.arr;
         /* Get all examples */
         for (var i = 0; i < exIndexArr.length; i++) {
             console.log(exIndexArr[i]);
-            jsonClient.get(exIndexArr[i], null, function(err, res, body) {
+            jsonClient.get(exIndexArr[i], null, function (err, res, body) {
 
                 var rawJob = body;
                 var job = {};
@@ -363,8 +377,7 @@ function loadExJobForm(name) {
     txtJobDesc.val(job.desc);
 
     /* This is the same but will just copy the job */
-    selectedJob = {};
-    selectedJob.code = job.code;
+    selectedJob = job;
     selectedJob.code.isExample = true;
 }
 
@@ -402,18 +415,18 @@ function DeployJob() {
         }
 
         /* Sort Array descending by flops(faster sandboxes first) */
-        if(selectedJob.code.isPartitioned) {
+        if (selectedJob.code.isPartitioned) {
             selectedTopology.sdbxs.sort(sandboxSortArrayByFlops);
             var partitioningData = eval(selectedJob.code.paramsAndData);
             /* Copying object */
-            var codeObj = $.extend({},selectedJob.code);
+            var codeObj = $.extend({}, selectedJob.code);
             codeObj.paramsAndData = {};
         }
 
         /* Create HashMap JobID -> result set, #sandbox, code barrier*/
         var rjobs = {};
         rjobs.hasAfterBarrier = selectedJob.code.hasAfterBarrier;
-        if(selectedJob.code.hasAfterBarrier){
+        if (selectedJob.code.hasAfterBarrier) {
             rjobs.afterBarrierCode = selectedJob.code.afterBarrierCode;
         }
         rjobs.resultSet = [];
@@ -432,21 +445,20 @@ function DeployJob() {
                 rjobs.numSandbox++;
 
                 /* If data is partitioned, balance data assignment */
-                if(selectedJob.code.isPartitioned)
-                {
+                if (selectedJob.code.isPartitioned) {
                     /* Copying the plain object */
-                    sdbxObj.jobCode = $.extend({},codeObj);
+                    sdbxObj.jobCode = $.extend({}, codeObj);
 
                     /* Weighting sandbox data distribution by flops capacity */
-                    var weight = Math.ceil(selectedTopology.sdbxs[i].pFlops/totalFlops * partitioningData.length);
+                    var weight = Math.ceil(selectedTopology.sdbxs[i].pFlops / totalFlops * partitioningData.length);
                     /* Partitioning */
-                    sdbxObj.jobCode.paramsAndData = JSON.stringify(partitioningData.slice(partitiningIndex,partitiningIndex + weight));
+                    sdbxObj.jobCode.paramsAndData = JSON.stringify(partitioningData.slice(partitiningIndex, partitiningIndex + weight));
                     sdbxObj.jobCode.pRange = [partitiningIndex, partitiningIndex + sdbxObj.jobCode.paramsAndData.length];
                     /* Adding the sandbox */
                     jobObj.sdbxs.push(sdbxObj);
 
                     /* Deciding if continue or done with partitioning */
-                    if(partitioningData.length  - (partitiningIndex + weight)> 0)
+                    if (partitioningData.length - (partitiningIndex + weight) > 0)
                         partitiningIndex += weight;
                     else
                         break;
@@ -461,7 +473,7 @@ function DeployJob() {
         }
 
         /*Set HashMap*/
-        rjobs.isPartitioned = selectedJob.code.isPartitioned;   
+        rjobs.isPartitioned = selectedJob.code.isPartitioned;
 
         /* Setting dialog text */
         dspnJobName.html(selectedJob.name);
@@ -479,10 +491,10 @@ function DeployJob() {
             resizable: false,
             modal: true,
             buttons: {
-                "Yes": function() {
+                "Yes": function () {
 
-                    var randomnumber = Math.floor((Math.random()*100)+1);
-                    var resWin = window.open('runningJob.html', "_blank",'PopUp',randomnumber, {
+                    var randomnumber = Math.floor((Math.random() * 100) + 1);
+                    var resWin = window.open('runningJob.html', "_blank", 'PopUp', randomnumber, {
                         "position": "right",
                         "height": 535,
                         "width": 415,
@@ -496,22 +508,22 @@ function DeployJob() {
                     rjobs.djobObj = $.extend({}, jobObj);
                     rjobs.djobObj.startTime = new Date();
                     rjobs.djobObj.hasContext = selectedJob.code.hasContext;
-                    if(selectedJob.code.hasContext){
-                       rjobs.djobObj.context = selectedJob.code.context;
-                    }     
+                    if (selectedJob.code.hasContext) {
+                        rjobs.djobObj.context = selectedJob.code.context;
+                    }
                     resWin.job = rjobs.djobObj;
                     resWin.refWin = window;
                     window.runningJobs[jobObj.jobId] = rjobs;
 
                     /* Adding Window Reference to the window */
                     window.runningJobs[jobObj.jobId].resWin = resWin;
-                    window.runningJobs[jobObj.jobId].name =  rjobs.djobObj.name;
+                    window.runningJobs[jobObj.jobId].name = rjobs.djobObj.name;
 
                     executeDeployment(rjobs.djobObj);
                     $(this).dialog("close");
 
                 },
-                "Cancel": function() {
+                "Cancel": function () {
                     delete rjobs;
                     $(this).dialog("close");
                 }
@@ -523,8 +535,7 @@ function DeployJob() {
     }
 }
 
-function sandboxSortArrayByFlops(a,b)
-{
+function sandboxSortArrayByFlops(a, b) {
     if (a.pFlops > b.pFlops)
         return -1;
     if (a.pFlops < b.pFlops)
@@ -555,9 +566,16 @@ function SaveJob() {
         return;
     }
 
+    /* Check if the example to clone conflicts with an existing job name */
+    if (getJob(txtJobName.val().trim()) != null && selectedJob.code.isExample) {
+        showError("A job with the same name already exist, please choose another job name, or edit the existing one.");
+        return;
+    }
+
     /* Restoring job */
     var job = selectedJob;
     var originalName = selectedJob.name;
+    var isExample = job.code.isExample;
     isNew = selectedJob.name === undefined;
 
     /* Updating Properties */
@@ -566,8 +584,13 @@ function SaveJob() {
 
     /* Storing or editing job */
     /* If a new job, create Object, if selected job, assign reference */
-    if (isNew)
+    if (isNew || job.code.isExample) {
+        /* Deleting example indicator */
+        if(isExample)
+            delete job.code.isExample;
+
         savedJobsArr.push(job);
+    }
     else
         updateJob(job, originalName);
 
@@ -577,7 +600,10 @@ function SaveJob() {
     refreshJobsTable();
 
     /*Show save message */
-    showMessage("Job sucessfully saved");
+    if(isExample)
+        showMessage("This example has been saved as a new job, you can find it under 'My Jobs' tab");
+    else
+        showMessage("Job sucessfully saved");
 }
 
 function updateJob(job, oName) {
@@ -668,7 +694,7 @@ function deleteJob(jobName) {
         resizable: false,
         modal: true,
         buttons: {
-            "Yes": function() {
+            "Yes": function () {
                 /* Deleting Topology */
                 var name = window.tJobName;
                 /* Deleting topology from array */
@@ -685,7 +711,7 @@ function deleteJob(jobName) {
 
                 $(this).dialog("close");
             },
-            Cancel: function() {
+            Cancel: function () {
                 $(this).dialog("close");
             }
         }
@@ -698,7 +724,7 @@ function showError(error) {
     $("#dialogError").dialog({
         modal: false,
         buttons: {
-            Ok: function() {
+            Ok: function () {
                 $(this).dialog("close");
             }
         }
@@ -710,7 +736,7 @@ function showMessage(msg) {
     $("#dialogMsg").dialog({
         modal: false,
         buttons: {
-            Ok: function() {
+            Ok: function () {
                 $(this).dialog("close");
             }
         }
@@ -738,11 +764,11 @@ function initializeSocketIO() {
     });
 
     /* Connection succeed */
-    socket.on('connect', function() {
+    socket.on('connect', function () {
 
 
         /* Reconnect Event */
-        socket.on('reconnect', function() {
+        socket.on('reconnect', function () {
 
             socket.emit("requestSandBoxListing");
             showAlert('Reconnected!', "This client has been Reconnected, all data will be retrieved again.", false)
@@ -750,7 +776,7 @@ function initializeSocketIO() {
         });
 
         /* Disconnect handler */
-        socket.on('disconnect', function() {
+        socket.on('disconnect', function () {
 
             clearAllData();
             showAlert('Connection Closed!', "This client has been disconnected, check your connection or try to restard the client.", false)
@@ -758,7 +784,7 @@ function initializeSocketIO() {
         });
 
         /* New Pipe Connected handler */
-        socket.on('sandBoxConnected', function(sndbx) {
+        socket.on('sandBoxConnected', function (sndbx) {
 
             var box = sndbx;
             avlbSandBoxes[box.id] = box;
@@ -772,7 +798,7 @@ function initializeSocketIO() {
         });
 
         /* New Pipe Disconnected handler */
-        socket.on('sandboxDisconnected', function(sndbx) {
+        socket.on('sandboxDisconnected', function (sndbx) {
 
             sndbx = sndbx;
 
@@ -789,19 +815,21 @@ function initializeSocketIO() {
         });
 
         /* Receive pipeListing Handler */
-        socket.on('reponseSandboxListing', function(data) {
+        socket.on('reponseSandboxListing', function (data) {
 
             var connectedSndbx = data;
 
 
             for (var i = 0; i < connectedSndbx.length; i++) {
                 avlbSandBoxes[connectedSndbx[i].id] = connectedSndbx[i];
-            };
+            }
+            ;
 
             for (var key in avlbSandBoxes) {
                 addSandBoxToMainTable(avlbSandBoxes[key]);
                 updateDashBoard(avlbSandBoxes[key], true)
-            };
+            }
+            ;
 
             showAlert('SandBoxes Added!', connectedSndbx.length + " SandBoxes have been added.", true);
 
@@ -810,13 +838,13 @@ function initializeSocketIO() {
         });
 
         /* Receive pipeListing Handler */
-        socket.on('socketIDResponse', function(socketId) {
+        socket.on('socketIDResponse', function (socketId) {
             /* Receiving socket id*/
             window.socketSessionID = socketId;
         });
 
         /* Receive Job Results */
-        socket.on('jobExecutionResponse', function(results) {
+        socket.on('jobExecutionResponse', function (results) {
             var rjobs = window.runningJobs[results.jobId];
             rjobs.resultSet.push(results.result);
             rjobs.numSandbox--;
@@ -826,17 +854,17 @@ function initializeSocketIO() {
             rjobs.resWin.changeReceived(1);
             rjobs.resWin.changePending(-1);
 
-            if(rjobs.numSandbox == 0){
-                if(rjobs.hasAfterBarrier){
+            if (rjobs.numSandbox == 0) {
+                if (rjobs.hasAfterBarrier) {
 
                     var result = runAfterBarrier(rjobs);
-                    showAlert("Job Done!",rjobs.name + " complete, verify result window." , true);
-                    rjobs.resWin.jobCompleted(result);
+                    showAlert("Job Done!", rjobs.name + " complete, verify result window.", true);
+                    rjobs.resWin.jobCompleted(result.r.result);
                     rjobs.resWin.focus();
                 }
-                else{
+                else {
                     result = rjobs.resultSet;
-                    showAlert("Job Done!",rjobs.name + " complete, verify result window." , true);
+                    showAlert("Job Done!", rjobs.name + " complete, verify result window.", true);
                     rjobs.resWin.jobCompleted(result);
                     rjobs.resWin.focus();
                 }
@@ -848,23 +876,23 @@ function initializeSocketIO() {
         });
 
         /* Receive Job Results */
-        socket.on('jobExecutionErrorResponse', function(error) {
+        socket.on('jobExecutionErrorResponse', function (error) {
             console.log("WHY ERROR?!?!");
             var rjobs = window.runningJobs[results.jobId];
             rjobs.numSandbox--;
             rjobs.resWin.changeErrors(1);
             rjobs.resWin.changePending(-1);
-            if(rjobs.numSandbox == 0){
-                if(rjobs.hasAfterBarrier){
+            if (rjobs.numSandbox == 0) {
+                if (rjobs.hasAfterBarrier) {
 
                     var result = runAfterBarrier(rjobs);
-                    showAlert("Job Done!",rjobs.name + " complete, verify result window." , true);
+                    showAlert("Job Done!", rjobs.name + " complete, verify result window.", true);
                     rjobs.resWin.jobCompleted(result);
                     rjobs.resWin.focus();
                 }
-                else{
+                else {
                     result = rjobs.resultSet;
-                    showAlert("Job Done!",rjobs.name + " complete, verify result window." , true);
+                    showAlert("Job Done!", rjobs.name + " complete, verify result window.", true);
                     rjobs.resWin.jobCompleted(result);
                     rjobs.resWin.focus();
                 }
@@ -883,18 +911,14 @@ function initializeSocketIO() {
     });
 }
 
-function runAfterBarrier(job)
-{
+function runAfterBarrier(job) {
     try {
         var resultArr = [];
 
-        if(job.isPartitioned)
-        {
+        if (job.isPartitioned) {
             /* If partitioned clean results into regular array */
-            for(var i =0;i<job.resultSet.length;i++)
-            {
-                for(var j =0;j<job.resultSet[i].length;j++)
-                {
+            for (var i = 0; i < job.resultSet.length; i++) {
+                for (var j = 0; j < job.resultSet[i].length; j++) {
                     resultArr.push(job.resultSet[i][j].result);
                 }
             }
@@ -905,7 +929,7 @@ function runAfterBarrier(job)
 
         /* Building function */
         var avFunc = eval("b=function(resultsArr){var resultbkp=resultsArr.slice(0);var result='';try{" + job.afterBarrierCode + "}catch(ex){return{\"e\":'Error Ocurred, Returning previous data(resultArr).'+ex.toString(),\"r\":resultbkp}}if(result==='')return{\"e\":'result variable not set! Returning previous data(resultArr).',\"r\":resultbkp};else return{\"e\":'',\"r\":result};}");
-        var result =  avFunc(resultArr);
+        var result = avFunc(resultArr);
         return result;
     } catch (ex) {
         showError("Your <b>After Barrier</b> code is not valid, please make corrections and try again.\n\n" + ex);
@@ -1028,7 +1052,7 @@ function removeTopology(row) {
         resizable: false,
         modal: true,
         buttons: {
-            "Yes": function() {
+            "Yes": function () {
                 /* Deleting Topology */
                 var name = window.tTopologyName;
                 /* Deleting topology from array */
@@ -1047,7 +1071,7 @@ function removeTopology(row) {
 
                 $(this).dialog("close");
             },
-            Cancel: function() {
+            Cancel: function () {
                 $(this).dialog("close");
             }
         }
@@ -1113,7 +1137,7 @@ function updateDashBoard(sdbx, isAdding) {
     if (isAdding) {
 
         lblSandBoxNum.html(Number(lblSandBoxNum.html()) + 1);
-        lblFlops.html((Number(lblFlops.html()) + sdbx.sysInfo.flops).toFixed(2));
+        lblFlops.html((Number(lblFlops.html()) + sdbx.sysInfo.pFlops).toFixed(2));
 
         if (sdbx.sysInfo.isNodeJS)
             lblMemory.html((Number(lblMemory.html()) + sdbx.sysInfo.totalmem / oneGB).toFixed(2));
@@ -1138,7 +1162,7 @@ function updateDashBoard(sdbx, isAdding) {
             content: buildToolTip(sdbx, false)
         });
 
-        google.maps.event.addListener(marker, 'click', function() {
+        google.maps.event.addListener(marker, 'click', function () {
             infowindow.open(gMap, marker);
         });
 
@@ -1147,7 +1171,7 @@ function updateDashBoard(sdbx, isAdding) {
 
     } else {
         lblSandBoxNum.html(Number(lblSandBoxNum.html()) - 1);
-        lblFlops.html((Number(lblFlops.html()) - sdbx.sysInfo.flops).toFixed(2));
+        lblFlops.html((Number(lblFlops.html()) - sdbx.sysInfo.pFlops).toFixed(2));
         lblMemory.html((Number(lblMemory.html()) - sdbx.sysInfo.totalmem / oneGB).toFixed(2));
 
         if (sdbx.sysInfo.isNodeJS)
@@ -1177,11 +1201,11 @@ function buildToolTip(sdbx, isTableTooltip) {
 
     if (isTableTooltip) {
         content = "<img class='map' src='https://maps.googleapis.com/maps/api/staticmap?" +
-            "center=" + sdbx.sysInfo.geo.ll[0] + "," + sdbx.sysInfo.geo.ll[1] +
-            "&zoom=2&size=280x100&markers=color:red%7C" + sdbx.sysInfo.geo.ll[0] + "," + sdbx.sysInfo.geo.ll[1] +
-            "'/>" +
-            "<br>" +
-            "<br>";
+        "center=" + sdbx.sysInfo.geo.ll[0] + "," + sdbx.sysInfo.geo.ll[1] +
+        "&zoom=2&size=280x100&markers=color:red%7C" + sdbx.sysInfo.geo.ll[0] + "," + sdbx.sysInfo.geo.ll[1] +
+        "'/>" +
+        "<br>" +
+        "<br>";
     }
     console.log(sdbx);
 
@@ -1193,14 +1217,14 @@ function buildToolTip(sdbx, isTableTooltip) {
         "<li>" + "<b>Memory:</b> " + (sdbx.sysInfo.totalmem / 1000000000).toFixed(2) + " GB</li>" +
         "<li>" + "<b>Platform:</b> " + sdbx.sysInfo.platform + "</li>" +
         "<li>" + "<b>OS:</b> " + sdbx.sysInfo.type + " </li>" +
-        "<li>" + "<b>FLOPS:</b> " + sdbx.sysInfo.flops + " GFLOPS</li>" +
+        "<li>" + "<b>FLOPS:</b> " + sdbx.sysInfo.pFlops + " GFLOPS</li>" +
         "<ul>";
     else
         content += "<ul>" +
         "<li>" + "<img src='" + img + "'/>" + "</li>" +
         "<li>" + "<b>Browser:</b> " + sdbx.sysInfo.browserInfo[0] + " " + sdbx.sysInfo.browserInfo[1] + "</li>" +
         "<li>" + "<b>Platform:</b> " + sdbx.sysInfo.platform + "</li>" +
-        "<li>" + "<b>FLOPS:</b> " + sdbx.sysInfo.flops + " GFLOPS</li>" +
+        "<li>" + "<b>FLOPS:</b> " + sdbx.sysInfo.pFlops + " GFLOPS</li>" +
         "<ul>";
 
 
@@ -1236,11 +1260,9 @@ function addSandBoxToMainTable(sdbx) {
     /*Sandbox type*/
     data[1] = (sdbx.sysInfo.isNodeJS) ? "Native" : "Browser";
     /*Sandbox type*/
-    data[2] = sdbx.sysInfo.flops;
+    data[2] = sdbx.sysInfo.pFlops;
 
-    var uptm = secondsToTime(sdbx.sysInfo.uptime);
-
-    data[3] = uptm.h + ":" + uptm.m + ":" + uptm.s;
+    data[3] = moment(sdbx.sysInfo.uptime).fromNow();
 
     data[4] = "<button box-id='" + sdbx.id + "' class='ui-button ui-widget ui-state-default ui-corner-all ui-button-text-only'>&nbsp;<span class='glyphicon glyphicon-eye-open'></span>&nbsp;</button>";
 
@@ -1251,7 +1273,7 @@ function addSandBoxToMainTable(sdbx) {
 function removeSandBoxFromMainTable(id) {
 
     var index = -1;
-    tblSdbxTable.rows().indexes().each(function(idx) {
+    tblSdbxTable.rows().indexes().each(function (idx) {
 
         var d = tblSdbxTable.row(idx).data();
         if (d[0] == id)
@@ -1268,7 +1290,7 @@ function removeSandBoxFromSelectedTable(row) {
 
     var id = row.parentNode.parentNode.childNodes[0].innerHTML;
     var index = -1;
-    tblSlctSdbxTable.rows().indexes().each(function(idx) {
+    tblSlctSdbxTable.rows().indexes().each(function (idx) {
 
         var d = tblSlctSdbxTable.row(idx).data();
         if (d[0] == id)
@@ -1300,7 +1322,8 @@ function transferSelectedSandBoxes() {
         tblSlctSdbxTable.row.add(sdbxObj).draw();
         slctTableArr[data[0]] = true;
 
-    };
+    }
+    ;
 }
 
 function switchScreen(idx) {
@@ -1353,7 +1376,7 @@ function dumpSystemInfo() {
     specs.platform = os.platform();
     specs.totalmem = os.totalmem();
     specs.type = os.type();
-    specs.uptime = os.uptime();
+    specs.uptime = new Date();
     specs.publicIP = getClientIP();
     specs.flops = 1;
     specs.isNodeJS = typeof exports !== 'undefined' && this.exports !== exports;
@@ -1363,7 +1386,7 @@ function dumpSystemInfo() {
     var isBehindNat = true;
 
     for (var dev in ifaces) {
-        ifaces[dev].forEach(function(details) {
+        ifaces[dev].forEach(function (details) {
             if (details.family == 'IPv4') {
 
                 /* Check if behind NAT */

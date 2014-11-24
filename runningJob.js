@@ -24,7 +24,10 @@ $(document).ready(function () {
         $("#tdExecTime").html( Number($("#tdExecTime").html())+1);
     }, 1000);
 
+    /* Resizing Window */
+    window.resizeTo(600, 550);
 });
+
 
 function changePending(n)
 {
