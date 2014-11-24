@@ -64,6 +64,9 @@ function jobCompleted(results)
     window.$("#gifLoading").hide();
     window.$("#gifSave").show();
 
+    var now = new Date();
+    $("#tdFinishTime").html(now.toUTCString());
+
 }
 
 function closeJobWindow() {
