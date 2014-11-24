@@ -312,6 +312,8 @@ function loadExamples() {
                 job.code.afterBarrierCode = rawJob.afBarrFunc;
                 job.code.hasAfterBarrier = rawJob.hasAftBarr;
                 job.code.isPartitioned = rawJob.isPartitioned;
+                job.code.hasContext = rawJob.hasContext;
+                job.code.context = rawJob.context;
                 job.code.kernelCode = rawJob.kernel;
                 job.code.paramsAndData = JSON.stringify(rawJob.params);
 
@@ -459,8 +461,7 @@ function DeployJob() {
         }
 
         /*Set HashMap*/
-        rjobs.isPartitioned = selectedJob.code.isPartitioned;
-        window.runningJobs[jobObj.jobId] = rjobs;
+        rjobs.isPartitioned = selectedJob.code.isPartitioned;   
 
         /* Setting dialog text */
         dspnJobName.html(selectedJob.name);
@@ -480,7 +481,8 @@ function DeployJob() {
             buttons: {
                 "Yes": function() {
 
-                    var resWin = window.open('runningJob.html', {
+                    var randomnumber = Math.floor((Math.random()*100)+1);
+                    var resWin = window.open('runningJob.html', "_blank",'PopUp',randomnumber, {
                         "position": "right",
                         "height": 535,
                         "width": 415,
@@ -491,19 +493,26 @@ function DeployJob() {
                     });
 
                     /* Setting selected job into the new window */
-                    window.djobObj.startTime = new Date();
-                    resWin.job = window.djobObj;
+                    rjobs.djobObj = $.extend({}, jobObj);
+                    rjobs.djobObj.startTime = new Date();
+                    rjobs.djobObj.hasContext = selectedJob.code.hasContext;
+                    if(selectedJob.code.hasContext){
+                       rjobs.djobObj.context = selectedJob.code.context;
+                    }     
+                    resWin.job = rjobs.djobObj;
                     resWin.refWin = window;
+                    window.runningJobs[jobObj.jobId] = rjobs;
 
                     /* Adding Window Reference to the window */
                     window.runningJobs[jobObj.jobId].resWin = resWin;
-                    window.runningJobs[jobObj.jobId].name = window.djobObj.name;
+                    window.runningJobs[jobObj.jobId].name =  rjobs.djobObj.name;
 
-                    executeDeployment(window.djobObj);
+                    executeDeployment(rjobs.djobObj);
                     $(this).dialog("close");
 
                 },
                 "Cancel": function() {
+                    delete rjobs;
                     $(this).dialog("close");
                 }
             }
@@ -811,6 +820,7 @@ function initializeSocketIO() {
             var rjobs = window.runningJobs[results.jobId];
             rjobs.resultSet.push(results.result);
             rjobs.numSandbox--;
+            console.log(results);
 
             /* Updating corresponding result window */
             rjobs.resWin.changeReceived(1);
@@ -839,6 +849,29 @@ function initializeSocketIO() {
 
         /* Receive Job Results */
         socket.on('jobExecutionErrorResponse', function(error) {
+            console.log("WHY ERROR?!?!");
+            var rjobs = window.runningJobs[results.jobId];
+            rjobs.numSandbox--;
+            rjobs.resWin.changeErrors(1);
+            rjobs.resWin.changePending(-1);
+            if(rjobs.numSandbox == 0){
+                if(rjobs.hasAfterBarrier){
+
+                    var result = runAfterBarrier(rjobs);
+                    showAlert("Job Done!",rjobs.name + " complete, verify result window." , true);
+                    rjobs.resWin.jobCompleted(result);
+                    rjobs.resWin.focus();
+                }
+                else{
+                    result = rjobs.resultSet;
+                    showAlert("Job Done!",rjobs.name + " complete, verify result window." , true);
+                    rjobs.resWin.jobCompleted(result);
+                    rjobs.resWin.focus();
+                }
+                result.jobId = results.jobId;
+                console.log(result);
+                delete rjobs;
+            }
             console.log(error);
         });
 
