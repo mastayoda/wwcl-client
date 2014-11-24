@@ -1,5 +1,8 @@
 /* Wait for Document to Load */
 $(document).ready(function () {
+		/* Globals */
+		 window.serverIpAddress = "23.251.156.127";
+		 window.geoServerCoordinates;
 
     /* Global Moment module */
     window.moment = require('moment');
@@ -40,6 +43,18 @@ $(document).ready(function () {
             "sEmptyTable": "No Sandboxes Connected."
         }
     });
+		
+		/* Maverick: Initialize Benchmark Table Sections */
+    window.tblBenchmarkSandboxes = $('#tblBenchmarkSandboxes').DataTable({
+        "lengthMenu": [5],
+        "bLengthChange": false,
+        "oLanguage": {
+            "sEmptyTable": "No Sandboxes Connected."
+        }
+    });
+		
+		setGeoServerCoordinates();//Set Server coordinates
+
 
     $('#sandboxes tbody').on('click', 'tr', function () {
         $(this).toggleClass('selected');
@@ -903,6 +918,13 @@ function initializeSocketIO() {
             console.log(error);
         });
 
+				/* RTT Refresh handler */
+        socket.on('RTTRefresh', function(sndbx) {
+            sndbx = sndbx;            
+            showAlert('New RTT received!', "SandBox " + sndbx.id, true);
+        });
+				
+				
         /* Request Pipe listing */
         socket.emit("requestSandBoxListing");
         /* Request other end socket ID */
@@ -1254,19 +1276,36 @@ function clearAllData() {
 
 function addSandBoxToMainTable(sdbx) {
     var data = [];
+		var dataBenchmarkTable = [];
 
     /*Sandbox ID*/
     data[0] = sdbx.id;
+		dataBenchmarkTable[0] = sdbx.id;
+		
     /*Sandbox type*/
     data[1] = (sdbx.sysInfo.isNodeJS) ? "Native" : "Browser";
     /*Sandbox type*/
     data[2] = sdbx.sysInfo.pFlops;
+		
+		/* Distance to the Server */
+		dataBenchmarkTable[1] = nodeToServerDistance(sdbx);
+		dataBenchmarkTable[2] = sdbx.sysInfo.publicIP;
+		dataBenchmarkTable[3] = window.serverIpAddress;		
+
+		if(typeof sdbx.sysInfo.RTT != 'undefined')
+			dataBenchmarkTable[4] = sdbx.sysInfo.RTT;
+		else
+			dataBenchmarkTable[4] = "No info";
+					
+		dataBenchmarkTable[5] = "<button box-id='" + sdbx.id + "' class='ui-button ui-widget ui-state-default ui-corner-all ui-button-text-only'>&nbsp;<span class='glyphicon glyphicon-ok-sign'></span>&nbsp;</button>";
+		
 
     data[3] = moment(sdbx.sysInfo.uptime).fromNow();
 
     data[4] = "<button box-id='" + sdbx.id + "' class='ui-button ui-widget ui-state-default ui-corner-all ui-button-text-only'>&nbsp;<span class='glyphicon glyphicon-eye-open'></span>&nbsp;</button>";
 
     tblSdbxTable.row.add(data).draw();
+		tblBenchmarkSandboxes.row.add(dataBenchmarkTable).draw();		
 }
 
 
@@ -1281,9 +1320,21 @@ function removeSandBoxFromMainTable(id) {
 
     });
 
+		//Benchmark
+		tblBenchmarkSandboxes.rows().indexes().each(function(idx) {
+
+        var d = tblBenchmarkSandboxes.row(idx).data();
+        if (d[0] == id)
+            index = idx;
+
+    });
+		
+
     /* If row is found */
-    if (index > -1)
+    if (index > -1){
         tblSdbxTable.row(index).remove().draw(false);
+				tblBenchmarkSandboxes.row(index).remove().draw(false);
+		}
 }
 
 function removeSandBoxFromSelectedTable(row) {
@@ -1328,21 +1379,30 @@ function transferSelectedSandBoxes() {
 
 function switchScreen(idx) {
     switch (idx) {
-        case 1:
+        case 1://dashboard
             $("#dashboard").fadeIn();
             $("#createTopology").hide();
             $("#deploy").hide();
+						$("#benchmark").hide();
             break;
-        case 2:
+        case 2://createTopology
             $("#dashboard").hide();
             $("#createTopology").fadeIn();
             $("#deploy").hide();
+						$("#benchmark").hide();
             break;
-        case 3:
+        case 3://deploy
             $("#dashboard").hide();
             $("#createTopology").hide();
             $("#deploy").fadeIn();
+						$("#benchmark").hide();
             break;
+				 case 4://benchmark
+            $("#dashboard").hide();
+            $("#createTopology").hide();
+            $("#deploy").hide();
+						$("#benchmark").fadeIn();
+            break;						
     }
 }
 
@@ -1439,3 +1499,26 @@ function secondsToTime(secs) {
     };
     return obj;
 }
+
+//Maverick
+//Calculates distance between two points in km's (I hate miles)
+function calculateDistance(p1, p2){
+  return (google.maps.geometry.spherical.computeDistanceBetween(p1, p2) / 1000).toFixed(2);
+}
+
+function nodeToServerDistance(sdbx){  
+	var geoNodeCoordinates = new google.maps.LatLng(sdbx.sysInfo.geo.ll[0], sdbx.sysInfo.geo.ll[1]);
+	 	 
+	return calculateDistance(geoNodeCoordinates, window.geoServerCoordinates);
+}
+
+/* Maverick: Obtaining Server Geo Information */
+function setGeoServerCoordinates(){
+	 var satelize = require('satelize');	 
+	 
+	 satelize.satelize({ip:window.serverIpAddress}, function(err, geoData) { 
+			 var obj = JSON.parse(geoData);
+			 window.geoServerCoordinates = new google.maps.LatLng(obj.latitude, obj.longitude);			
+	 });	 
+}
+
