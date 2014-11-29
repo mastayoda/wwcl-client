@@ -768,7 +768,7 @@ function setCodeIndicatorIcon(isValid) {
         spn.attr("class", "glyphicon glyphicon-remove-circle");
 }
 
-function initializeSocketIO() {
+function initializeSocketIO() {//Socket connection ------------------------------------------------------------------------------------------>
 
     var io = require('socket.io-client');
 
@@ -794,7 +794,7 @@ function initializeSocketIO() {
         socket.on('disconnect', function () {
 
             clearAllData();
-            showAlert('Connection Closed!', "This client has been disconnected, check your connection or try to restard the client.", false)
+            showAlert('Connection Closed!', "This client has been disconnected, check your connection or try to restart the client.", false)
 
         });
 
@@ -805,7 +805,8 @@ function initializeSocketIO() {
             avlbSandBoxes[box.id] = box;
 
             addSandBoxToMainTable(box);
-
+						addSandBoxToBenchmark(box);
+						
             updateDashBoard(box, true);
 
             showAlert('New SandBox Connected!', "A new SandBox has join the cluster.", box, true);
@@ -821,8 +822,9 @@ function initializeSocketIO() {
 
             avlbSandBoxes.splice(avlbSandBoxes.indexOf(sndbx.id), 1);
 
-            removeSandBoxFromMainTable(sndbx.id);
-
+            removeSandBoxFromMainTable(sndbx.id); //------------------------------------------------------------------------------------------->
+						removeSandBoxFromBenchmark(sndbx.id);
+						
             refreshTopologiesTable();
 
             showAlert('SandBox Disconnected!', "SandBox " + sndbx.id + " has been disconnected.", true);
@@ -842,6 +844,7 @@ function initializeSocketIO() {
 
             for (var key in avlbSandBoxes) {
                 addSandBoxToMainTable(avlbSandBoxes[key]);
+								addSandBoxToBenchmark(avlbSandBoxes[key]);
                 updateDashBoard(avlbSandBoxes[key], true)
             }
             ;
@@ -920,8 +923,12 @@ function initializeSocketIO() {
 
 				/* RTT Refresh handler */
         socket.on('RTTRefresh', function(sndbx) {
-            sndbx = sndbx;            
-            showAlert('New RTT received!', "SandBox " + sndbx.id, true);
+            var box = sndbx;            
+						removeSandBoxFromBenchmark(box.id);
+						avlbSandBoxes[box.id].sysInfo.RTT = box.RTT;							
+            
+						addSandBoxToBenchmark(avlbSandBoxes[box.id]);						
+            //showAlert('New RTT received!', "SandBox " + sndbx.id, true);
         });
 				
 				
@@ -1275,36 +1282,41 @@ function clearAllData() {
 }
 
 function addSandBoxToMainTable(sdbx) {
-    var data = [];
-		var dataBenchmarkTable = [];
-
+    var data = [];		
     /*Sandbox ID*/
-    data[0] = sdbx.id;
-		dataBenchmarkTable[0] = sdbx.id;
+    data[0] = sdbx.id;		
 		
     /*Sandbox type*/
     data[1] = (sdbx.sysInfo.isNodeJS) ? "Native" : "Browser";
     /*Sandbox type*/
     data[2] = sdbx.sysInfo.pFlops;
-		
+			
+    data[3] = moment(sdbx.sysInfo.uptime).fromNow();
+
+    data[4] = "<button box-id='" + sdbx.id + "' class='ui-button ui-widget ui-state-default ui-corner-all ui-button-text-only'>&nbsp;<span class='glyphicon glyphicon-eye-open'></span>&nbsp;</button>";
+
+    tblSdbxTable.row.add(data).draw();		
+}
+
+//Benchmark
+function addSandBoxToBenchmark(sdbx) {   
+		var dataBenchmarkTable = [];
+
+    /*Sandbox ID*/   
+		dataBenchmarkTable[0] = sdbx.id;
+		  
 		/* Distance to the Server */
 		dataBenchmarkTable[1] = nodeToServerDistance(sdbx);
 		dataBenchmarkTable[2] = sdbx.sysInfo.publicIP;
 		dataBenchmarkTable[3] = window.serverIpAddress;		
-
+		
 		if(typeof sdbx.sysInfo.RTT != 'undefined')
 			dataBenchmarkTable[4] = sdbx.sysInfo.RTT;
 		else
 			dataBenchmarkTable[4] = "No info";
 					
 		dataBenchmarkTable[5] = "<button box-id='" + sdbx.id + "' class='ui-button ui-widget ui-state-default ui-corner-all ui-button-text-only'>&nbsp;<span class='glyphicon glyphicon-ok-sign'></span>&nbsp;</button>";
-		
-
-    data[3] = moment(sdbx.sysInfo.uptime).fromNow();
-
-    data[4] = "<button box-id='" + sdbx.id + "' class='ui-button ui-widget ui-state-default ui-corner-all ui-button-text-only'>&nbsp;<span class='glyphicon glyphicon-eye-open'></span>&nbsp;</button>";
-
-    tblSdbxTable.row.add(data).draw();
+		   
 		tblBenchmarkSandboxes.row.add(dataBenchmarkTable).draw();		
 }
 
@@ -1318,9 +1330,20 @@ function removeSandBoxFromMainTable(id) {
         if (d[0] == id)
             index = idx;
 
-    });
+    });		
+		
+    /* If row is found */
+    if (index > -1){
+        tblSdbxTable.row(index).remove().draw(false);			
+		}
+}
 
-		//Benchmark
+//Benchmark
+function removeSandBoxFromBenchmark(id) {
+
+    var index = -1;    
+
+	  //Benchmark
 		tblBenchmarkSandboxes.rows().indexes().each(function(idx) {
 
         var d = tblBenchmarkSandboxes.row(idx).data();
@@ -1329,13 +1352,12 @@ function removeSandBoxFromMainTable(id) {
 
     });
 		
-
     /* If row is found */
-    if (index > -1){
-        tblSdbxTable.row(index).remove().draw(false);
+    if (index > -1){       
 				tblBenchmarkSandboxes.row(index).remove().draw(false);
 		}
-}
+}//End removeSandBoxFromBenchmark
+
 
 function removeSandBoxFromSelectedTable(row) {
 
