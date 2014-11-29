@@ -1584,10 +1584,7 @@ function setGeoServerCoordinates(){
 	 
 	 satelize.satelize({ip:window.serverIpAddress}, function(err, geoData) { 
 			 var obj = JSON.parse(geoData);
-			 window.geoServerCoordinates = new google.maps.LatLng(obj.latitude, obj.longitude);			
-			 alert(window.geoServerCoordinates);
-	 });	 
-	 
-	 //return window.geoServerCoordinates;
+			 window.geoServerCoordinates = new google.maps.LatLng(obj.latitude, obj.longitude);						 
+	 });	 	
 }
 
