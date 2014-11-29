@@ -54,7 +54,28 @@ $(document).ready(function () {
     });
 		
 		setGeoServerCoordinates();//Set Server coordinates
+		
+		/* Adding Google Map Marker for Server ------------------------------------------------------------------------------------------*/
+		
+		var delay=1000;//1 seconds, it is necessary to give enough time to obtain server coordinates
+    setTimeout(function(){
+				var marker = new google.maps.Marker({
+					position: window.geoServerCoordinates,
+					title: "Server",
+					icon: './images/vi-icon-linux.png'
+				});
+			/* Adding infoWindow to map markers */
+			var infowindow = new google.maps.InfoWindow({
+					content: buildServerToolTip(window.geoServerCoordinates)
+			});
 
+			google.maps.event.addListener(marker, 'click', function () {
+					infowindow.open(gMap, marker);
+			});
+
+			marker.setMap(gMap);			    
+    },delay); 
+				
 
     $('#sandboxes tbody').on('click', 'tr', function () {
         $(this).toggleClass('selected');
@@ -768,7 +789,7 @@ function setCodeIndicatorIcon(isValid) {
         spn.attr("class", "glyphicon glyphicon-remove-circle");
 }
 
-function initializeSocketIO() {//Socket connection ------------------------------------------------------------------------------------------>
+function initializeSocketIO() {// ------------------------------------------------------------------------------------------> Socket connection
 
     var io = require('socket.io-client');
 
@@ -822,7 +843,7 @@ function initializeSocketIO() {//Socket connection -----------------------------
 
             avlbSandBoxes.splice(avlbSandBoxes.indexOf(sndbx.id), 1);
 
-            removeSandBoxFromMainTable(sndbx.id); //------------------------------------------------------------------------------------------->
+            removeSandBoxFromMainTable(sndbx.id); 
 						removeSandBoxFromBenchmark(sndbx.id);
 						
             refreshTopologiesTable();
@@ -1260,6 +1281,29 @@ function buildToolTip(sdbx, isTableTooltip) {
     return content;
 }
 
+//Build tooltip for Server
+function buildServerToolTip(serverCoordinates) {//------------------------------------------------------------------------------> Server tooltip
+  var content = "";
+
+  img = 'assets/img/linux.png' 
+
+   
+	 content = "<img class='map' src='https://maps.googleapis.com/maps/api/staticmap?" +
+	 "center=" + serverCoordinates[0] + "," + serverCoordinates[1] +
+	 "&zoom=2&size=280x100&markers=color:blue%7Clabel:Server%7C" + serverCoordinates[0] + "," + serverCoordinates[1] +
+	 "'/>" +
+	 "<br>" +
+	 "<br>";
+    
+	content += "<ul>" +
+	"<li>" + "<img src='" + img + "'/>" + "</li>" +		
+	"<li>" + "<b>Platform:</b> Linux Server </li>" +		
+	"<ul>";
+
+	return content;
+}
+
+
 function clearAllData() {
 
     /*Clear all data */
@@ -1541,6 +1585,9 @@ function setGeoServerCoordinates(){
 	 satelize.satelize({ip:window.serverIpAddress}, function(err, geoData) { 
 			 var obj = JSON.parse(geoData);
 			 window.geoServerCoordinates = new google.maps.LatLng(obj.latitude, obj.longitude);			
+			 alert(window.geoServerCoordinates);
 	 });	 
+	 
+	 //return window.geoServerCoordinates;
 }
 
