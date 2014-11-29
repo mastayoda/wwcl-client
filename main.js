@@ -948,8 +948,7 @@ function initializeSocketIO() {// ----------------------------------------------
 						removeSandBoxFromBenchmark(box.id);
 						avlbSandBoxes[box.id].sysInfo.RTT = box.RTT;							
             
-						addSandBoxToBenchmark(avlbSandBoxes[box.id]);						
-            //showAlert('New RTT received!', "SandBox " + sndbx.id, true);
+						addSandBoxToBenchmark(avlbSandBoxes[box.id]);						           
         });
 				
 				
@@ -1217,7 +1216,19 @@ function updateDashBoard(sdbx, isAdding) {
         });
 
         marker.setMap(gMap);
-        sdbx.sysInfo.mapMarker = marker;
+        sdbx.sysInfo.mapMarker = marker;		
+				
+				var flightPlanCoordinates = [ll, window.geoServerCoordinates];
+				var flightPath = new google.maps.Polyline({
+					path: flightPlanCoordinates,
+					geodesic: true,
+					strokeColor: '#FF0000',
+					strokeOpacity: 1,
+					strokeWeight: 1
+				});
+
+				flightPath.setMap(gMap);
+				sdbx.sysInfo.flightPath = flightPath;					
 
     } else {
         lblSandBoxNum.html(Number(lblSandBoxNum.html()) - 1);
@@ -1231,8 +1242,38 @@ function updateDashBoard(sdbx, isAdding) {
 
         /* Removing Google Maps Marker */
         sdbx.sysInfo.mapMarker.setMap(null);
+				sdbx.sysInfo.flightPath.setMap(null);				
     }
 }
+
+//Draws Polyline between the Server and the new connection from sandbox
+function addPolylineBetweenServerAndSandbox(ll){
+		var flightPlanCoordinates = [ll, window.geoServerCoordinates];
+		var flightPath = new google.maps.Polyline({
+			path: flightPlanCoordinates,
+			geodesic: true,
+			strokeColor: '#FF0000',
+			strokeOpacity: 1,
+			strokeWeight: 1
+		});
+
+		flightPath.setMap(gMap);
+}
+
+//Deletes Polyline between the Server and the new connection from sandbox
+function removePolylineBetweenServerAndSandbox(ll){
+		var flightPlanCoordinates = [ll, window.geoServerCoordinates];
+		var flightPath = new google.maps.Polyline({
+			path: flightPlanCoordinates,
+			geodesic: true,
+			strokeColor: '#FF0000',
+			strokeOpacity: 0,
+			strokeWeight: 1
+		});
+
+		flightPath.setMap(null);
+}
+
 
 function buildToolTip(sdbx, isTableTooltip) {
     var content = "";
