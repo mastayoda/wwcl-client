@@ -3,9 +3,11 @@ $(document).ready(function () {
 		/* Globals */
 		 window.serverIpAddress = "23.251.156.127";
 		 window.geoServerCoordinates;
+		 window.hops = {};
 
     /* Global Moment module */
     window.moment = require('moment');
+		window.traceroute = require('traceroute');		
 
     /* Enabling Copy & Paste */
     var gui = require('nw.gui');
@@ -28,10 +30,10 @@ $(document).ready(function () {
     /* Initialize Google Maps */
     var mapOptions = {
         center: {
-            lat: -34.397,
-            lng: 150.644
+            lat: 25.7877,//-34.397,
+            lng: 280.2241//150.644
         },
-        zoom: 1
+        zoom: 2
     }
     window.gMap = new google.maps.Map(document.getElementById('map-canvas'), mapOptions);
 
@@ -53,27 +55,36 @@ $(document).ready(function () {
         }
     });
 		
+		/* Maverick: Initialize Traceroute Table Sections */
+    window.tblTraceroute = $('#tblTraceroute').DataTable({
+        "lengthMenu": [5],
+        "bLengthChange": false,
+        "oLanguage": {
+            "sEmptyTable": "No traceroute info."
+        }
+    });
+		
 		setGeoServerCoordinates();//Set Server coordinates
 		
 		/* Adding Google Map Marker for Server ------------------------------------------------------------------------------------------*/
 		
-		var delay=1000;//1 seconds, it is necessary to give enough time to obtain server coordinates
+		var delay=2000;//1 seconds, it is necessary to give enough time to obtain server coordinates
     setTimeout(function(){
 				var marker = new google.maps.Marker({
 					position: window.geoServerCoordinates,
 					title: "Server",
 					icon: './images/vi-icon-linux.png'
 				});
-			/* Adding infoWindow to map markers */
-			var infowindow = new google.maps.InfoWindow({
-					content: buildServerToolTip(window.geoServerCoordinates)
-			});
+				/* Adding infoWindow to map markers */
+				var infowindow = new google.maps.InfoWindow({
+						content: buildServerToolTip(window.geoServerCoordinates)
+				});
 
-			google.maps.event.addListener(marker, 'click', function () {
-					infowindow.open(gMap, marker);
-			});
+				google.maps.event.addListener(marker, 'click', function () {
+						infowindow.open(gMap, marker);
+				});
 
-			marker.setMap(gMap);			    
+				marker.setMap(gMap);			    
     },delay); 
 				
 
@@ -1350,6 +1361,8 @@ function clearAllData() {
     /*Clear all data */
     tblSdbxTable.clear().draw();
     tblSlctSdbxTable.clear().draw();
+		tblBenchmarkSandboxes.clear().draw();
+		tblTraceroute.clear().draw();
     /* Clear all map markers */
     for (var i = 0; i < avlbSandBoxes.length; i++) {
         avlbSandBoxes[i].sysInfo.mapMarker.setMap(null);
@@ -1628,4 +1641,41 @@ function setGeoServerCoordinates(){
 			 window.geoServerCoordinates = new google.maps.LatLng(obj.latitude, obj.longitude);						 
 	 });	 	
 }
+
+/* Tracing Client to Server path */
+function doTraceroute(){
+  tblTraceroute.clear().draw();
+
+	window.traceroute.trace("google.com", function (err,hops) {
+		if (!err) console.log(hops);
+		
+		addHopsToTraceroute(hops);   		
+	});
+	
+}
+
+//Adding hops to Traceroute table
+function addHopsToTraceroute(hops) {   
+		var dataTracerouteTable = [];		
+		var i = 0;
+		var lastHop = "localhost";
+		
+		hops.splice(hops.indexOf(false), 1);//Delete all false returns
+		var hop = Object.keys(hops);
+		hop.forEach(function(item) {
+				var items = Object.keys(hops[item]);
+				items.forEach(function(ip) {
+					var value = hops[item][ip];
+					
+					dataTracerouteTable[0] = lastHop;																	
+					dataTracerouteTable[1] = ip;
+					lastHop = ip;
+					dataTracerouteTable[2] = value[0];
+					dataTracerouteTable[3] = value[1];		
+					dataTracerouteTable[4] = value[2];
+					tblTraceroute.row.add(dataTracerouteTable).draw();					
+				});//foreach
+		});	
+		    								   				
+}//END add hops to Traceroute
 
