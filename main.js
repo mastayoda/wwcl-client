@@ -2,6 +2,7 @@
 $(document).ready(function () {
 		/* Globals */
 		 window.serverIpAddress = "23.251.156.127";
+		 window.serverHostname = "worldwidecluster.com";
 		 window.geoServerCoordinates;
 		 window.hops = {};
 
@@ -1413,8 +1414,8 @@ function addSandBoxToBenchmark(sdbx) {
 		else
 			dataBenchmarkTable[4] = "No info";
 					
-		dataBenchmarkTable[5] = "<button box-id='" + sdbx.id + "' class='ui-button ui-widget ui-state-default ui-corner-all ui-button-text-only'>&nbsp;<span class='glyphicon glyphicon-ok-sign'></span>&nbsp;</button>";
-		   
+		dataBenchmarkTable[5] = "<button box-id='" + sdbx.id + "' class='ui-button ui-widget ui-state-default ui-corner-all ui-button-text-only'>&nbsp;<span class='glyphicon glyphicon-ok-sign'></span>&nbsp;</button>";		
+		dataBenchmarkTable[6] = "<a class='logout' href='javascript:doTraceroute(\""+ sdbx.sysInfo.publicIP.toString() + "\");'>	Trace </a>"
 		tblBenchmarkSandboxes.row.add(dataBenchmarkTable).draw();		
 }
 
@@ -1643,12 +1644,15 @@ function setGeoServerCoordinates(){
 }
 
 /* Tracing Client to Server path */
-function doTraceroute(){
-  tblTraceroute.clear().draw();
+function doTraceroute(remoteHost){
+	var tempAddress = window.serverHostname;
+  tblTraceroute.clear().draw();		
+	
+	if(typeof remoteHost != 'undefined')
+		tempAddress = remoteHost;
 
-	window.traceroute.trace("google.com", function (err,hops) {
-		if (!err) console.log(hops);
-		
+	window.traceroute.trace(tempAddress, function (err,hops) {
+		if (!err) console.log(hops);   
 		addHopsToTraceroute(hops);   		
 	});
 	
@@ -1657,24 +1661,30 @@ function doTraceroute(){
 //Adding hops to Traceroute table
 function addHopsToTraceroute(hops) {   
 		var dataTracerouteTable = [];		
-		var i = 0;
+		var i = 1;
 		var lastHop = "localhost";
 		
-		hops.splice(hops.indexOf(false), 1);//Delete all false returns
+		while(i==0){
+		  if(hops.indexOf(false)!=-1){
+				hops.splice(hops.indexOf(false), 1);//Delete all false returns
+			}
+			else
+			  i=1;
+		}
 		var hop = Object.keys(hops);
 		hop.forEach(function(item) {
-				var items = Object.keys(hops[item]);
-				items.forEach(function(ip) {
-					var value = hops[item][ip];
-					
-					dataTracerouteTable[0] = lastHop;																	
-					dataTracerouteTable[1] = ip;
-					lastHop = ip;
-					dataTracerouteTable[2] = value[0];
-					dataTracerouteTable[3] = value[1];		
-					dataTracerouteTable[4] = value[2];
-					tblTraceroute.row.add(dataTracerouteTable).draw();					
-				});//foreach
+			var items = Object.keys(hops[item]);
+			items.forEach(function(ip) {
+				var value = hops[item][ip];
+				
+				dataTracerouteTable[0] = lastHop;																	
+				dataTracerouteTable[1] = ip;
+				lastHop = ip;
+				dataTracerouteTable[2] = value[0];
+				dataTracerouteTable[3] = value[1];		
+				dataTracerouteTable[4] = value[2];
+				tblTraceroute.row.add(dataTracerouteTable).draw();					
+			});//foreach
 		});	
 		    								   				
 }//END add hops to Traceroute
