@@ -1665,16 +1665,14 @@ function addHopsToTraceroute(hops) {
 		var lastHop = "localhost";
 		
 		while(i==0){
-		  if(hops.indexOf(false)!=-1){
-				hops.splice(hops.indexOf(false), 1);//Delete all false returns
-			}
+		  if(hops.indexOf(false)!=-1)
+				hops.splice(hops.indexOf(false), 1);//Delete all false returns			
 			else
 			  i=1;
 		}
 
 		var hop = Object.keys(hops);
-		hop.forEach(function(item) {
-		  alert('2 ' + item);
+		hop.forEach(function(item) {		  
 			var items = Object.keys(hops[item]);
 			items.forEach(function(ip) {
 				var value = hops[item][ip];
