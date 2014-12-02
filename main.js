@@ -1661,7 +1661,7 @@ function doTraceroute(remoteHost){
 //Adding hops to Traceroute table
 function addHopsToTraceroute(hops) {   
 		var dataTracerouteTable = [];		
-		var i = 1;
+		var i = 0;
 		var lastHop = "localhost";
 		
 		while(i==0){
@@ -1671,8 +1671,10 @@ function addHopsToTraceroute(hops) {
 			else
 			  i=1;
 		}
+
 		var hop = Object.keys(hops);
 		hop.forEach(function(item) {
+		  alert('2 ' + item);
 			var items = Object.keys(hops[item]);
 			items.forEach(function(ip) {
 				var value = hops[item][ip];
@@ -1680,9 +1682,21 @@ function addHopsToTraceroute(hops) {
 				dataTracerouteTable[0] = lastHop;																	
 				dataTracerouteTable[1] = ip;
 				lastHop = ip;
-				dataTracerouteTable[2] = value[0];
-				dataTracerouteTable[3] = value[1];		
-				dataTracerouteTable[4] = value[2];
+				if(value[0] != undefined)
+					dataTracerouteTable[2] = value[0];
+				else
+				  dataTracerouteTable[2] = "No RTT";
+					
+				if(value[1] != undefined)
+					dataTracerouteTable[3] = value[1];
+				else
+				  dataTracerouteTable[3] = "No RTT";	
+				
+				if(value[2] != undefined)
+					dataTracerouteTable[4] = value[2];
+				else
+				  dataTracerouteTable[4] = "No RTT";	
+				
 				tblTraceroute.row.add(dataTracerouteTable).draw();					
 			});//foreach
 		});	
