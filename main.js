@@ -8,7 +8,7 @@ $(document).ready(function () {
 
     /* Global Moment module */
     window.moment = require('moment');
-		window.traceroute = require('traceroute');		
+		window.traceroute = require('traceroute');
 
     /* Enabling Copy & Paste */
     var gui = require('nw.gui');
@@ -46,7 +46,7 @@ $(document).ready(function () {
             "sEmptyTable": "No Sandboxes Connected."
         }
     });
-		
+
 		/* Maverick: Initialize Benchmark Table Sections */
     window.tblBenchmarkSandboxes = $('#tblBenchmarkSandboxes').DataTable({
         "lengthMenu": [5],
@@ -55,7 +55,7 @@ $(document).ready(function () {
             "sEmptyTable": "No Sandboxes Connected."
         }
     });
-		
+
 		/* Maverick: Initialize Traceroute Table Sections */
     window.tblTraceroute = $('#tblTraceroute').DataTable({
         "lengthMenu": [5],
@@ -64,11 +64,11 @@ $(document).ready(function () {
             "sEmptyTable": "No traceroute info."
         }
     });
-		
+
 		setGeoServerCoordinates();//Set Server coordinates
-		
+
 		/* Adding Google Map Marker for Server ------------------------------------------------------------------------------------------*/
-		
+
 		var delay=2000;//1 seconds, it is necessary to give enough time to obtain server coordinates
     setTimeout(function(){
 				var marker = new google.maps.Marker({
@@ -85,9 +85,9 @@ $(document).ready(function () {
 						infowindow.open(gMap, marker);
 				});
 
-				marker.setMap(gMap);			    
-    },delay); 
-				
+				marker.setMap(gMap);
+    },delay);
+
 
     $('#sandboxes tbody').on('click', 'tr', function () {
         $(this).toggleClass('selected');
@@ -839,7 +839,7 @@ function initializeSocketIO() {// ----------------------------------------------
 
             addSandBoxToMainTable(box);
 						addSandBoxToBenchmark(box);
-						
+
             updateDashBoard(box, true);
 
             showAlert('New SandBox Connected!', "A new SandBox has join the cluster.", box, true);
@@ -855,9 +855,9 @@ function initializeSocketIO() {// ----------------------------------------------
 
             avlbSandBoxes.splice(avlbSandBoxes.indexOf(sndbx.id), 1);
 
-            removeSandBoxFromMainTable(sndbx.id); 
+            removeSandBoxFromMainTable(sndbx.id);
 						removeSandBoxFromBenchmark(sndbx.id);
-						
+
             refreshTopologiesTable();
 
             showAlert('SandBox Disconnected!', "SandBox " + sndbx.id + " has been disconnected.", true);
@@ -956,14 +956,14 @@ function initializeSocketIO() {// ----------------------------------------------
 
 				/* RTT Refresh handler */
         socket.on('RTTRefresh', function(sndbx) {
-            var box = sndbx;            
+            var box = sndbx;
 						removeSandBoxFromBenchmark(box.id);
-						avlbSandBoxes[box.id].sysInfo.RTT = box.RTT;							
-            
-						addSandBoxToBenchmark(avlbSandBoxes[box.id]);						           
+						avlbSandBoxes[box.id].sysInfo.RTT = box.RTT;
+
+						addSandBoxToBenchmark(avlbSandBoxes[box.id]);
         });
-				
-				
+
+
         /* Request Pipe listing */
         socket.emit("requestSandBoxListing");
         /* Request other end socket ID */
@@ -1228,8 +1228,8 @@ function updateDashBoard(sdbx, isAdding) {
         });
 
         marker.setMap(gMap);
-        sdbx.sysInfo.mapMarker = marker;		
-				
+        sdbx.sysInfo.mapMarker = marker;
+
 				var flightPlanCoordinates = [ll, window.geoServerCoordinates];
 				var flightPath = new google.maps.Polyline({
 					path: flightPlanCoordinates,
@@ -1240,7 +1240,7 @@ function updateDashBoard(sdbx, isAdding) {
 				});
 
 				flightPath.setMap(gMap);
-				sdbx.sysInfo.flightPath = flightPath;					
+				sdbx.sysInfo.flightPath = flightPath;
 
     } else {
         lblSandBoxNum.html(Number(lblSandBoxNum.html()) - 1);
@@ -1254,7 +1254,7 @@ function updateDashBoard(sdbx, isAdding) {
 
         /* Removing Google Maps Marker */
         sdbx.sysInfo.mapMarker.setMap(null);
-				sdbx.sysInfo.flightPath.setMap(null);				
+				sdbx.sysInfo.flightPath.setMap(null);
     }
 }
 
@@ -1338,19 +1338,19 @@ function buildToolTip(sdbx, isTableTooltip) {
 function buildServerToolTip(serverCoordinates) {//------------------------------------------------------------------------------> Server tooltip
   var content = "";
 
-  img = 'assets/img/linux.png' 
+  img = 'assets/img/linux.png'
 
-   
+
 	 content = "<img class='map' src='https://maps.googleapis.com/maps/api/staticmap?" +
 	 "center=" + serverCoordinates[0] + "," + serverCoordinates[1] +
 	 "&zoom=2&size=280x100&markers=color:blue%7Clabel:Server%7C" + serverCoordinates[0] + "," + serverCoordinates[1] +
 	 "'/>" +
 	 "<br>" +
 	 "<br>";
-    
+
 	content += "<ul>" +
-	"<li>" + "<img src='" + img + "'/>" + "</li>" +		
-	"<li>" + "<b>Platform:</b> Linux Server </li>" +		
+	"<li>" + "<img src='" + img + "'/>" + "</li>" +
+	"<li>" + "<b>Platform:</b> Linux Server </li>" +
 	"<ul>";
 
 	return content;
@@ -1381,42 +1381,42 @@ function clearAllData() {
 }
 
 function addSandBoxToMainTable(sdbx) {
-    var data = [];		
+    var data = [];
     /*Sandbox ID*/
-    data[0] = sdbx.id;		
-		
+    data[0] = sdbx.id;
+
     /*Sandbox type*/
     data[1] = (sdbx.sysInfo.isNodeJS) ? "Native" : "Browser";
     /*Sandbox type*/
     data[2] = sdbx.sysInfo.pFlops;
-			
+
     data[3] = moment(sdbx.sysInfo.uptime).fromNow();
 
     data[4] = "<button box-id='" + sdbx.id + "' class='ui-button ui-widget ui-state-default ui-corner-all ui-button-text-only'>&nbsp;<span class='glyphicon glyphicon-eye-open'></span>&nbsp;</button>";
 
-    tblSdbxTable.row.add(data).draw();		
+    tblSdbxTable.row.add(data).draw();
 }
 
 //Benchmark
-function addSandBoxToBenchmark(sdbx) {   
+function addSandBoxToBenchmark(sdbx) {
 		var dataBenchmarkTable = [];
 
-    /*Sandbox ID*/   
+    /*Sandbox ID*/
 		dataBenchmarkTable[0] = sdbx.id;
-		  
+
 		/* Distance to the Server */
 		dataBenchmarkTable[1] = nodeToServerDistance(sdbx);
 		dataBenchmarkTable[2] = sdbx.sysInfo.publicIP;
-		dataBenchmarkTable[3] = window.serverIpAddress;		
-		
+		dataBenchmarkTable[3] = window.serverIpAddress;
+
 		if(typeof sdbx.sysInfo.RTT != 'undefined')
 			dataBenchmarkTable[4] = sdbx.sysInfo.RTT;
 		else
 			dataBenchmarkTable[4] = "No info";
-					
-		dataBenchmarkTable[5] = "<button box-id='" + sdbx.id + "' class='ui-button ui-widget ui-state-default ui-corner-all ui-button-text-only'>&nbsp;<span class='glyphicon glyphicon-ok-sign'></span>&nbsp;</button>";		
+
+		dataBenchmarkTable[5] = "<button box-id='" + sdbx.id + "' class='ui-button ui-widget ui-state-default ui-corner-all ui-button-text-only'>&nbsp;<span class='glyphicon glyphicon-ok-sign'></span>&nbsp;</button>";
 		dataBenchmarkTable[6] = "<a class='logout' href='javascript:doTraceroute(\""+ sdbx.sysInfo.publicIP.toString() + "\");'>	Trace </a>"
-		tblBenchmarkSandboxes.row.add(dataBenchmarkTable).draw();		
+		tblBenchmarkSandboxes.row.add(dataBenchmarkTable).draw();
 }
 
 
@@ -1429,18 +1429,18 @@ function removeSandBoxFromMainTable(id) {
         if (d[0] == id)
             index = idx;
 
-    });		
-		
+    });
+
     /* If row is found */
     if (index > -1){
-        tblSdbxTable.row(index).remove().draw(false);			
+        tblSdbxTable.row(index).remove().draw(false);
 		}
 }
 
 //Benchmark
 function removeSandBoxFromBenchmark(id) {
 
-    var index = -1;    
+    var index = -1;
 
 	  //Benchmark
 		tblBenchmarkSandboxes.rows().indexes().each(function(idx) {
@@ -1450,9 +1450,9 @@ function removeSandBoxFromBenchmark(id) {
             index = idx;
 
     });
-		
+
     /* If row is found */
-    if (index > -1){       
+    if (index > -1){
 				tblBenchmarkSandboxes.row(index).remove().draw(false);
 		}
 }//End removeSandBoxFromBenchmark
@@ -1523,7 +1523,7 @@ function switchScreen(idx) {
             $("#createTopology").hide();
             $("#deploy").hide();
 						$("#benchmark").fadeIn();
-            break;						
+            break;
     }
 }
 
@@ -1587,20 +1587,18 @@ function dumpSystemInfo() {
 }
 
 function getClientIP() {
+
+    return "0.0.0.0";
+
     if (window.XMLHttpRequest) xmlhttp = new XMLHttpRequest();
     else xmlhttp = new ActiveXObject("Microsoft.XMLHTTP");
 
-    xmlhttp.open("GET", "http://api.hostip.info/get_html.php", false);
+    xmlhttp.open("GET", "http://ip-api.com/json", false);
     xmlhttp.send();
 
     hostipInfo = xmlhttp.responseText.split("\n");
 
-    for (i = 0; hostipInfo.length >= i; i++) {
-        ipAddress = hostipInfo[i].split(":");
-        if (ipAddress[0] == "IP") return ipAddress[1];
-    }
-
-    return false;
+    return JSON.parse(hostipInfo[0]).query;
 }
 
 function secondsToTime(secs) {
@@ -1627,77 +1625,77 @@ function calculateDistance(p1, p2){
   return (google.maps.geometry.spherical.computeDistanceBetween(p1, p2) / 1000).toFixed(2);
 }
 
-function nodeToServerDistance(sdbx){  
+function nodeToServerDistance(sdbx){
 	var geoNodeCoordinates = new google.maps.LatLng(sdbx.sysInfo.geo.ll[0], sdbx.sysInfo.geo.ll[1]);
-	 	 
+
 	return calculateDistance(geoNodeCoordinates, window.geoServerCoordinates);
 }
 
 /* Maverick: Obtaining Server Geo Information */
 function setGeoServerCoordinates(){
-	 var satelize = require('satelize');	 
-	 
-	 satelize.satelize({ip:window.serverIpAddress}, function(err, geoData) { 
+	 var satelize = require('satelize');
+
+	 satelize.satelize({ip:window.serverIpAddress}, function(err, geoData) {
 			 var obj = JSON.parse(geoData);
-			 window.geoServerCoordinates = new google.maps.LatLng(obj.latitude, obj.longitude);						 
-	 });	 	
+			 window.geoServerCoordinates = new google.maps.LatLng(obj.latitude, obj.longitude);
+	 });
 }
 
 /* Tracing Client to Server path */
 function doTraceroute(remoteHost){
 	var tempAddress = window.serverHostname;
-  tblTraceroute.clear().draw();		
-	
+  tblTraceroute.clear().draw();
+
 	if(typeof remoteHost != 'undefined')
 		tempAddress = remoteHost;
 
 	window.traceroute.trace(tempAddress, function (err,hops) {
-		if (!err) console.log(hops);   
-		addHopsToTraceroute(hops);   		
+		if (!err) console.log(hops);
+		addHopsToTraceroute(hops);
 	});
-	
+
 }
 
 //Adding hops to Traceroute table
-function addHopsToTraceroute(hops) {   
-		var dataTracerouteTable = [];		
+function addHopsToTraceroute(hops) {
+		var dataTracerouteTable = [];
 		var i = 0;
 		var lastHop = "localhost";
-		
+
 		while(i==0){
 		  if(hops.indexOf(false)!=-1)
-				hops.splice(hops.indexOf(false), 1);//Delete all false returns			
+				hops.splice(hops.indexOf(false), 1);//Delete all false returns
 			else
 			  i=1;
 		}
 
 		var hop = Object.keys(hops);
-		hop.forEach(function(item) {		  
+		hop.forEach(function(item) {
 			var items = Object.keys(hops[item]);
 			items.forEach(function(ip) {
 				var value = hops[item][ip];
-				
-				dataTracerouteTable[0] = lastHop;																	
+
+				dataTracerouteTable[0] = lastHop;
 				dataTracerouteTable[1] = ip;
 				lastHop = ip;
 				if(value[0] != undefined)
 					dataTracerouteTable[2] = value[0];
 				else
 				  dataTracerouteTable[2] = "No RTT";
-					
+
 				if(value[1] != undefined)
 					dataTracerouteTable[3] = value[1];
 				else
-				  dataTracerouteTable[3] = "No RTT";	
-				
+				  dataTracerouteTable[3] = "No RTT";
+
 				if(value[2] != undefined)
 					dataTracerouteTable[4] = value[2];
 				else
-				  dataTracerouteTable[4] = "No RTT";	
-				
-				tblTraceroute.row.add(dataTracerouteTable).draw();					
+				  dataTracerouteTable[4] = "No RTT";
+
+				tblTraceroute.row.add(dataTracerouteTable).draw();
 			});//foreach
-		});	
-		    								   				
+		});
+
 }//END add hops to Traceroute
 
