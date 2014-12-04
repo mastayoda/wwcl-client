@@ -1000,6 +1000,7 @@ function runAfterBarrier(job) {
 
 function exitClient() {
     /* Exiting process */
+    process.exit();
     window.close();
 }
 
