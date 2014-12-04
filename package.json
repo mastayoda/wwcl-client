@@ -14,9 +14,9 @@
     "linux"
   ],
   "window": {
-    "toolbar": true,
-    "resizable": true,
-    "frame": true,
+    "toolbar": false,
+    "resizable": false,
+    "frame": false,
     "width": 1100,
     "height": 700,
     "min_width": 600,
