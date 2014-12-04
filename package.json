@@ -1,7 +1,7 @@
 {
   "name": "WorldWideCluster",
   "version": "0.0.1",
-  "description": "CS536 Final Project",
+  "description": "CS Final Project",
   "main": "index.html",
   "private": true,
   "keywords": [

@@ -241,8 +241,8 @@ $(document).ready(function () {
             "height": 870,
             "focus": true,
             "toolbar": false,
-            "frame": false,
-            "resizable": false
+            "resizable": false,
+            "frame": false
         });
 
         /* Setting selected job into the new window */

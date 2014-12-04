@@ -488,7 +488,7 @@ function saveCode() {
 
 function closeAndSetFlag() {
     window.refWin.isEditorWinOpen = false;
-    window.close();
+   this.window.close();
 }
 
 
