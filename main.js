@@ -69,14 +69,14 @@ $(document).ready(function () {
 
 		/* Adding Google Map Marker for Server ------------------------------------------------------------------------------------------*/
 
-		var delay=2000;//1 seconds, it is necessary to give enough time to obtain server coordinates
+	/*	var delay=2000;//1 seconds, it is necessary to give enough time to obtain server coordinates
     setTimeout(function(){
 				var marker = new google.maps.Marker({
 					position: window.geoServerCoordinates,
 					title: "Server",
 					icon: './images/vi-icon-linux.png'
 				});
-				/* Adding infoWindow to map markers */
+				//Adding infoWindow to map markers
 				var infowindow = new google.maps.InfoWindow({
 						content: buildServerToolTip(window.geoServerCoordinates)
 				});
@@ -87,7 +87,7 @@ $(document).ready(function () {
 
 				marker.setMap(gMap);
     },delay);
-
+    */
 
     $('#sandboxes tbody').on('click', 'tr', function () {
         $(this).toggleClass('selected');
@@ -1639,6 +1639,22 @@ function setGeoServerCoordinates(){
 	 satelize.satelize({ip:window.serverIpAddress}, function(err, geoData) {
 			 var obj = JSON.parse(geoData);
 			 window.geoServerCoordinates = new google.maps.LatLng(obj.latitude, obj.longitude);
+
+             var marker = new google.maps.Marker({
+                 position: window.geoServerCoordinates,
+                 title: "Server",
+                 icon: './images/vi-icon-linux.png'
+             });
+             /* Adding infoWindow to map markers */
+             var infowindow = new google.maps.InfoWindow({
+                 content: buildServerToolTip(window.geoServerCoordinates)
+             });
+
+             google.maps.event.addListener(marker, 'click', function () {
+                 infowindow.open(gMap, marker);
+             });
+
+             marker.setMap(gMap);
 	 });
 }
 
