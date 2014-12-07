@@ -17,6 +17,7 @@ $(document).ready(function () {
     window.job.errors = 0;
     window.job.aborted = 0;
     window.job.received = 0;
+    window.job.TotalElapsedTime = 0;
 
     /* Execution Time Timer */
     window.timer = setInterval(function () {
@@ -55,9 +56,15 @@ function changeReceived(n)
 
 function jobCompleted(results)
 {
-    /* Storing results and stopping timer */
-    window.job.results =  results;
+    /* Storing results and stopping timer */    
     window.clearInterval(window.timer);
+
+    var now = new Date();
+    $("#tdFinishTime").html(now.toUTCString());
+    var finishTime = now.getTime();    
+    var startTime = window.job.startTime.getTime();     
+    window.job.TotalElapsedTime = finishTime - startTime;    
+    window.job.results =  results;       
 
     /* Showing save and close buttons */
     window.$("#btnCloseDiv").show();
@@ -67,8 +74,8 @@ function jobCompleted(results)
     window.$("#gifLoading").hide();
     window.$("#gifSave").show();
 
-    var now = new Date();
-    $("#tdFinishTime").html(now.toUTCString());
+
+
 
 }
 
@@ -93,8 +100,7 @@ function chooseFile(name) {
             fileName += ".json";
 
         /* Writing results */
-        fs.writeFile(fileName, JSON.stringify(window.job.results, null, 4));
-
+        fs.writeFile(fileName, "Total elapsed time: " + JSON.stringify(window.job.TotalElapsedTime, null, 4)+" ms\r\n"+JSON.stringify(window.job.results, null, 4));        
     });
 
     chooser.trigger('click');
