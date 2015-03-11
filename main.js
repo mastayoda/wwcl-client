@@ -44,6 +44,21 @@ $(document).ready(function () {
         "bLengthChange": false,
         "oLanguage": {
             "sEmptyTable": "No Sandboxes Connected."
+        },
+        dom: 'T<"clear">lfrtip',
+        "tableTools": {
+            "sRowSelect": "multi",
+            "aButtons": [ 
+                "select_all", 
+                "select_none",
+                "copy",
+                "print",
+                {
+                    "sExtends":    "collection",
+                    "sButtonText": "Save",
+                    "aButtons":    [ "csv", "xls", "pdf" ]
+                }
+             ]
         }
     });
 
