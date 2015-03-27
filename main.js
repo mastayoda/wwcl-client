@@ -82,28 +82,6 @@ $(document).ready(function () {
 
 		setGeoServerCoordinates();//Set Server coordinates
 
-		/* Adding Google Map Marker for Server ------------------------------------------------------------------------------------------*/
-
-	/*	var delay=2000;//1 seconds, it is necessary to give enough time to obtain server coordinates
-    setTimeout(function(){
-				var marker = new google.maps.Marker({
-					position: window.geoServerCoordinates,
-					title: "Server",
-					icon: './images/vi-icon-linux.png'
-				});
-				//Adding infoWindow to map markers
-				var infowindow = new google.maps.InfoWindow({
-						content: buildServerToolTip(window.geoServerCoordinates)
-				});
-
-				google.maps.event.addListener(marker, 'click', function () {
-						infowindow.open(gMap, marker);
-				});
-
-				marker.setMap(gMap);
-    },delay);
-    */
-
     $('#sandboxes tbody').on('click', 'tr', function () {
         $(this).toggleClass('selected');
     });
@@ -377,10 +355,11 @@ function loadExamples() {
     /* Request JSON example index array */
     jsonClient.get('exampleIndex.json', null, function (err, res, body) {
 
+
         var exIndexArr = body.arr;
         /* Get all examples */
         for (var i = 0; i < exIndexArr.length; i++) {
-            console.log(exIndexArr[i]);
+       
             jsonClient.get(exIndexArr[i], null, function (err, res, body) {
 
                 var rawJob = body;
@@ -393,6 +372,12 @@ function loadExamples() {
                 job.code.context = rawJob.context;
                 job.code.kernelCode = rawJob.kernel;
                 job.code.paramsAndData = JSON.stringify(rawJob.params);
+                if(rawJob.hasReduce)
+                    job.code.hasReduce = rawJob.hasReduce;
+                if(rawJob.reduceCode)
+                    job.code.reduceCode = rawJob.reduceCode;
+                if(rawJob.readFromDisk)
+                    job.code.readFromDisk = rawJob.readFromDisk;
 
                 job.name = rawJob.name;
                 job.desc = rawJob.desc;
@@ -468,6 +453,9 @@ function DeployJob() {
         var dspnTopoSdbxCount = $("#dspnTopoSdbxCount");
         var dspnTopoFLOPS = $("#dspnTopoFLOPS");
 
+        /* File lines (start from 1 for the sed command) */
+        var lineIndex = 1;
+
         /* Calculating the FLOPS and building sadboxes array */
         for (var i = 0; i < selectedTopology.sdbxs.length; i++) {
             if (selectedTopology.sdbxs[i].isPresent) {
@@ -484,7 +472,17 @@ function DeployJob() {
             /* Copying object */
             var codeObj = $.extend({}, selectedJob.code);
             codeObj.paramsAndData = {};
+        }/* If data is a external File */
+        else if (selectedJob.code.readFromDisk) {
+            selectedTopology.sdbxs.sort(sandboxSortArrayByFlops);
+            /* Lets make the powerful machines take the las chunks */
+            selectedTopology.sdbxs.reverse();
+            var fileData = JSON.parse(selectedJob.code.paramsAndData);
+            /* Copying object */
+            var codeObj = $.extend({}, selectedJob.code);
+            codeObj.paramsAndData = {"none":0};
         }
+
 
         /* Create HashMap JobID -> result set, #sandbox, code barrier*/
         var rjobs = {};
@@ -526,6 +524,37 @@ function DeployJob() {
                     else
                         break;
                 }
+                /* If data is a file, balance data assignment */
+                else if (selectedJob.code.readFromDisk) {
+                    /* Copying the plain object */
+                    sdbxObj.jobCode = $.extend({}, codeObj);
+
+                    /* Weighting sandbox data distribution by flops capacity */
+                    var weight = Math.ceil((selectedTopology.sdbxs[i].pFlops / totalFlops) * fileData.lines);
+                    /* Partitioning */
+                    sdbxObj.jobCode.paramsAndData = JSON.stringify({"none":0});
+                    sdbxObj.jobCode.file = fileData.file;
+                    sdbxObj.jobCode.from = lineIndex;
+
+                    if (fileData.lines - (lineIndex + weight) > 0)
+                        sdbxObj.jobCode.to =  lineIndex + weight - 1;
+                    else
+                         sdbxObj.jobCode.to =  fileData.lines;
+                    // sdbxObj.jobCode.paramsAndData = JSON.stringify(partitioningData.slice(partitiningIndex, partitiningIndex + weight));
+
+                    // sdbxObj.jobCode.pRange = [partitiningIndex, partitiningIndex + sdbxObj.jobCode.paramsAndData.length];
+                    /* Adding the sandbox */
+                    jobObj.sdbxs.push(sdbxObj);
+
+                    /* Deciding if continue or done with partitioning */
+                    if (fileData.lines - (lineIndex + weight) > 0)
+                        lineIndex += weight;
+                    else
+                    {
+                        console.log(sdbxObj.jobCode.from +"-"+sdbxObj.jobCode.to);
+                        break;
+                    }
+                }
                 else /* Just assign the data and push the sandbox */
                 {
                     sdbxObj.jobCode = selectedJob.code;
@@ -537,6 +566,7 @@ function DeployJob() {
 
         /*Set HashMap*/
         rjobs.isPartitioned = selectedJob.code.isPartitioned;
+        rjobs.readFromDisk = selectedJob.code.readFromDisk;
 
         /* Setting dialog text */
         dspnJobName.html(selectedJob.name);
@@ -582,7 +612,11 @@ function DeployJob() {
                     window.runningJobs[jobObj.jobId].resWin = resWin;
                     window.runningJobs[jobObj.jobId].name = rjobs.djobObj.name;
 
-                    executeDeployment(rjobs.djobObj);
+                    //setTimeout( function(){
+                        executeDeployment(rjobs.djobObj);
+
+                    //}, 1000 );
+                    
                     $(this).dialog("close");
 
                 },
@@ -914,7 +948,8 @@ function initializeSocketIO() {// ----------------------------------------------
             var rjobs = window.runningJobs[results.jobId];
             rjobs.resultSet.push(results.result);
             rjobs.numSandbox--;
-            console.log(results);
+            
+            //console.log(results);
 
             /* Updating corresponding result window */
             rjobs.resWin.changeReceived(1);
@@ -1326,7 +1361,7 @@ function buildToolTip(sdbx, isTableTooltip) {
         "<br>" +
         "<br>";
     }
-    console.log(sdbx);
+    //console.log(sdbx);
 
     if (sdbx.sysInfo.isNodeJS)
         content += "<ul>" +

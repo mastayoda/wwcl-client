@@ -106,6 +106,10 @@
                                     <button id="btnTestKernel">Test Run
                                         <span class='glyphicon glyphicon-play'></span>
                                     </button>
+                                    <input type="checkbox" id="chkTogleReduceFunction">
+                                    <label for="chkTogleReduceFunction">Reduce Function
+                                        <span class='glyphicon glyphicon-indent-right'></span>
+                                    </label>
                                     <input type="checkbox" id="chkTogleAfterBarrier">
                                     <label for="chkTogleAfterBarrier">After Barrier Function
                                         <span class='glyphicon glyphicon-indent-right'></span>
@@ -117,6 +121,33 @@
                             <tr>
                                 <td>
                                     <textarea id="kernelCode" name="code"></textarea>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    &nbsp;
+                                </td>
+                            </tr>
+                            <tr>
+                                <td id="reducetd" style="display:none">
+                                    <table class="codeEditorControls">
+                                        <tr>
+                                            <td>
+                                                <table>
+                                                    <tr>
+                                                        <td>
+                                                            <a class="logout" href="javascript:autoFormatSelection(reduceEditor);">Format Selection</a>
+                                                        </td>
+                                                        <td>
+                                                            <h4>Reduce Function</h4>
+                                                        </td>
+                                                    </tr>
+                                                </table>
+                                            </td>
+
+                                        </tr>
+                                    </table>
+                                    <textarea id="reduceCode" name="code"></textarea>
                                 </td>
                             </tr>
                             <tr>
@@ -157,7 +188,7 @@
                                     <table>
                                         <tr>
                                             <td>
-                                                <a class="logout" href="javascript:autoFormatSelection(paramsEditor);;">Format Selection</a>
+                                                <a class="logout" href="javascript:autoFormatSelection(paramsEditor);">Format Selection</a>
                                             </td>
                                             <td>
                                                 <h4>Data & Params.</h4>
@@ -170,6 +201,12 @@
                                     <input type="checkbox" id="chkPartitionData">
                                     <label for="chkPartitionData">Partition Data
                                         <span class='glyphicon glyphicon-th-list'></span>
+                                    </label>
+                                </td>
+                                <td align="right">
+                                    <input type="checkbox" id="chkReadFromFile">
+                                    <label for="chkReadFromFile">Read From File
+                                        <span class='glyphicon glyphicon-open-file'></span>
                                     </label>
                                 </td>
                             </tr>

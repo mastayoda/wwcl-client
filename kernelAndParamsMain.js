@@ -30,6 +30,32 @@ $(document).ready(function() {
         matchBrackets: true
     });
 
+    window.reduceEditor = CodeMirror.fromTextArea(document.getElementById("reduceCode"), {
+        lineNumbers: true,
+        extraKeys: {
+            "Ctrl-Space": "autocomplete"
+        },
+        mode: {
+            name: "javascript",
+            globalVars: true
+        },
+        gutters: ["CodeMirror-lint-markers", "CodeMirror-foldgutter"],
+        lineWrapping: true,
+        extraKeys: {
+            "Ctrl-Q": function(cm) {
+                cm.foldCode(cm.getCursor());
+            },
+
+            "Ctrl-Space": "autocomplete"
+
+        },
+        foldGutter: true,
+        lint: true,
+        theme: "mdn-like",
+        styleActiveLine: true,
+        matchBrackets: true
+    });
+
     window.afterBarrierEditor = CodeMirror.fromTextArea(document.getElementById("afterBarrierCode"), {
         lineNumbers: true,
         extraKeys: {
@@ -224,6 +250,12 @@ $(document).ready(function() {
 
     });
 
+    $("#chkTogleReduceFunction").button().click(function() {
+
+        $("#reducetd").toggle();
+
+    });
+
     $("#chkTogleAfterBarrier").button().click(function() {
 
         $("#afterBarriertd").toggle();
@@ -255,7 +287,32 @@ $(document).ready(function() {
         } else {
             showInformation("Partition Option Deselected, each sandbox will receive the same parameter object.");
         }
+    });
 
+    $("#chkReadFromFile").button().click(function() {
+
+        /* Partitioned Data Selected */
+        if ($("#chkReadFromFile").is(':checked')) {
+            /* Parameter code */
+            var pCode = paramsEditor.getValue().trim();
+            /* Validating the Parameter Object */
+            try {
+                var paramOrData = eval(JSON.parse(pCode));
+            } catch (ex) {
+                showError("Your <b>parameter</b> code is not valid, please make corrections and try again.\n\n" + ex);
+                return;
+            }
+            /* If not instance of Array */
+            if ( !("file" in paramOrData) || !("lines" in paramOrData)) {
+                showError("Your <b>parameter</b> code must be an <b>Object</b>, must contain properties file and lines.");
+            } else if (isNaN(paramOrData.lines)) {
+                showError("Property'lines' must be a valid number.");
+            } else {
+                showInformation("Your parameter file Object looks Ok, you can proceed.");
+            }
+        } else {
+            showInformation("Data File Option Deselected, use partition or single data options.");
+        }
     });
 
     $("#btnKernelHelp").button().click(function() {
@@ -288,9 +345,21 @@ $(document).ready(function() {
 
     /* Set data if Available */
     if (selectedJob.code !== undefined) {
+
         kernelEditor.setValue(selectedJob.code.kernelCode);
+        if(selectedJob.code.reduceCode)
+            reduceEditor.setValue(selectedJob.code.reduceCode);
         paramsEditor.setValue(selectedJob.code.paramsAndData);
         afterBarrierEditor.setValue(selectedJob.code.afterBarrierCode);
+
+        if(selectedJob.code.hasReduce)
+        {
+            $("#reducetd").toggle();
+            reduceEditor.focus();
+            kernelEditor.focus();
+
+            $("#chkTogleReduceFunction").prop( "checked", true );
+        }
 
         if(selectedJob.code.hasAfterBarrier)
         {
@@ -305,6 +374,15 @@ $(document).ready(function() {
         {
             $("#chkPartitionData").prop( "checked", true );
         }
+        else
+            $("#chkPartitionData").prop( "checked", false );
+
+        if(selectedJob.code.readFromDisk)
+        {
+            $("#chkReadFromFile").prop( "checked", true );
+        }
+        else
+            $("#chkReadFromFile").prop( "checked", false );
 
         if (selectedJob.code.isExample)
             formatExample();
@@ -407,10 +485,12 @@ function saveCode() {
 
     var check = require('syntax-error');
     var kCode = kernelEditor.getValue().trim();
+    var rCode = reduceEditor.getValue().trim();
     var pCode = paramsEditor.getValue().trim();
     var avCode = afterBarrierEditor.getValue().trim();
     var avFunc = "";
     var isPartitioned = false;
+    var isUsingFile = false;
 
     /* Validating the Parameter Object */
     try {
@@ -439,6 +519,16 @@ function saveCode() {
     } catch (ex) {
         showError("Your <b>Kernel</b> code is not valid, please make corrections and try again.\n\n" + ex);
         return;
+    }
+
+        /* Validating reduce Function if Selected */
+    if ($("#chkTogleReduceFunction").is(':checked') && rCode !== '') {
+
+        var err = check(rCode);
+        if (err) {
+            showError("Your <b>Reduce</b> code is not valid, please make corrections and try again.\n\n" + err);
+            return;
+        }
     }
 
     /* Validating After Barrier Function if Selected */
@@ -474,12 +564,33 @@ function saveCode() {
         isPartitioned = true;
     }
 
+        /* Partitioned Data Selected */
+    if ($("#chkReadFromFile").is(':checked')) {
+
+        /* If not instance of Array */
+        if (!(paramOrData instanceof Object)) {
+            showError("Partitioning is selected, your <b>parameter</b> code must be an <b>Object</b>, remember that line ranges will be partitioned between Sandboxes.");
+            return;
+        } else if ( !("file" in paramOrData) || !("lines" in paramOrData)) {
+            showError("Your <b>parameter</b> code must be an <b>Object</b>, must contain properties file and lines.");
+            return;
+        } else if (isNaN(paramOrData.lines)) {
+            showError("Property'lines' must be a valid number.");
+            return;
+        }
+
+        isUsingFile = true;
+    }
+
     /* Setting Job Code and save */
     var jobCode = {
         "kernelCode": kCode,
+        "reduceCode": rCode,
         "paramsAndData": pCode,
         "isPartitioned": isPartitioned,
+        "readFromDisk": isUsingFile,
         "hasAfterBarrier": avFunc !== "",
+        "hasReduce": rCode !== "",
         "afterBarrierCode": avCode
     };
     window.saveJobCode(jobCode);
@@ -496,9 +607,14 @@ function loadExternalCode(jobCode) {
 
     /* Reseting Data */
     window.selectedJob.code = jobCode.code;
+    if(window.selectedJob.code.reduceCode)
+        window.reduceEditor.setValue(window.selectedJob.code.reduceCode);
     window.kernelEditor.setValue(window.selectedJob.code.kernelCode);
     window.paramsEditor.setValue(window.selectedJob.code.paramsAndData);
     window.afterBarrierEditor.setValue(window.selectedJob.code.afterBarrierCode);
+
+    if(window.selectedJob.code.hasReduce)
+        window.$("#chkTogleReduceFunction").prop( "checked", true );
 
     if(window.selectedJob.code.hasAfterBarrier)
         window.$("#chkTogleAfterBarrier").prop( "checked", true );
@@ -506,6 +622,8 @@ function loadExternalCode(jobCode) {
     if(window.selectedJob.code.isPartitioned)
         window.$("#chkPartitionData").prop( "checked", true );
 
+    if(window.selectedJob.code.readFromDisk)
+        window.$("#chkReadFromFile").prop( "checked", true );
 
     if (window.selectedJob.code.isExample)
         window.formatExample();
@@ -560,4 +678,7 @@ function formatExample() {
     window.afterBarrierEditor.execCommand("selectAll");
     window.autoFormatSelection(afterBarrierEditor);
     window.afterBarrierEditor.execCommand("goLineRight");
+    window.kernelEditor.execCommand("selectAll");
+    window.autoFormatSelection(kernelEditor);
+    window.kernelEditor.execCommand("goLineRight");
 }
