@@ -14,8 +14,10 @@ $(document).ready(function () {
 
     /* Setting Internal Information */
     window.job.pending = window.job.sdbxs.length;
+    window.job.running = window.job.sdbxs.length;
     window.job.errors = 0;
     window.job.aborted = 0;
+    window.job.reScheduled = 0;
     window.job.received = 0;
     window.job.TotalElapsedTime = 0;
 
@@ -29,6 +31,11 @@ $(document).ready(function () {
     window.resizeTo(600, 550);
 });
 
+function changeRunning(n)
+{
+    window.job.running+= n;
+    window.$("#tdRunningSdbxs").html(window.job.running);
+}
 
 function changePending(n)
 {
@@ -46,6 +53,12 @@ function changeAborted(n)
 {
     window.job.aborted += n;
     window.$("#tdAborted").html(window.job.aborted);
+}
+
+function changeRescheduled(n)
+{
+    window.job.reScheduled+= n;
+    window.$("#tdReScheduled").html(window.job.reScheduled);
 }
 
 function changeReceived(n)

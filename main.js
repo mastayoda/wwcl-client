@@ -971,17 +971,20 @@ function initializeSocketIO() {
                 /* Redeploy Job */
                 executeDeployment(qJob);
 
-                /* Log Message */
-                console.log("Redeploying job "+ qJob);
+                /* Incrementing reScheduled Counter */
+                rjobs.resWin.changeRunning(1);
+                rjobs.resWin.changeRescheduled(1);
             }
             /* Decrement sandbox's ongoing execution count and job id removal*/
             else if(avlbSandBoxes[results.sandboxSocketId])
             {
+                /* Decrement sandbox registry */
                 avlbSandBoxes[results.sandboxSocketId].executingJobsCount--;
                 delete avlbSandBoxes[results.sandboxSocketId].runningJobs[results.jobId];
             }
 
             /* Updating corresponding result window */
+            rjobs.resWin.changeRunning(-1);
             rjobs.resWin.changeReceived(1);
             rjobs.resWin.changePending(-1);
 
@@ -1035,6 +1038,10 @@ function rescheduleJobs(sdbx)
     {
         /* Get the running global job entry */
         var rjobs = window.runningJobs[jobId];
+
+        /* Chaning Window counter */
+        rjobs.resWin.changeRunning(-1);
+        rjobs.resWin.changeAborted(1);
 
         /* Saving this job to be deployed */
         var job = JSON.parse(JSON.stringify(rjobs.djobObj));
