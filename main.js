@@ -339,16 +339,6 @@ $(document).ready(function () {
 
 function loadExamples() {
 
-
-    /* TODO: create example storage mechanism
-     localStorage = require('localStorage');
-     exampleJobsArr = localStorage.getItem("topologies");
-     if (exampleJobsArr != null)
-     exampleJobsArr = JSON.parse(topologiesArr);
-     else
-     exampleJobsArr = [];
-     */
-
     /* Instantiate the json requester */
     window.jsonClient = require('request-json').newClient('https://raw.githubusercontent.com/mastayoda/wwcl-examples/master/');
 
@@ -492,6 +482,7 @@ function DeployJob() {
         }
         rjobs.resultSet = [];
         rjobs.numSandbox = 0;
+        rjobs.sandboxRegistry = [];
 
         /* Calculating total flops and sandboxes for the job*/
         for (var i = 0; i < selectedTopology.sdbxs.length; i++) {
@@ -504,6 +495,10 @@ function DeployJob() {
 
                 /*Set #sandbox to wait for*/
                 rjobs.numSandbox++;
+                /* Incrementing this sandbox deployed job count */
+                avlbSandBoxes[selectedTopology.sdbxs[i].id].executingJobsCount++;
+                /* Add Running job ID to this sandBox */
+                avlbSandBoxes[selectedTopology.sdbxs[i].id].runningJobs[jobObj.jobId] = {};
 
                 /* If data is partitioned, balance data assignment */
                 if (selectedJob.code.isPartitioned) {
@@ -540,9 +535,7 @@ function DeployJob() {
                         sdbxObj.jobCode.to =  lineIndex + weight - 1;
                     else
                          sdbxObj.jobCode.to =  fileData.lines;
-                    // sdbxObj.jobCode.paramsAndData = JSON.stringify(partitioningData.slice(partitiningIndex, partitiningIndex + weight));
-
-                    // sdbxObj.jobCode.pRange = [partitiningIndex, partitiningIndex + sdbxObj.jobCode.paramsAndData.length];
+ 
                     /* Adding the sandbox */
                     jobObj.sdbxs.push(sdbxObj);
 
@@ -551,6 +544,8 @@ function DeployJob() {
                         lineIndex += weight;
                     else
                     {
+                        /* Registry to keep track of completed sandboxes */
+                        rjobs.sandboxRegistry[selectedTopology.sdbxs[i].id] = {done:false, task:sdbxObj};
                         console.log(sdbxObj.jobCode.from +"-"+sdbxObj.jobCode.to);
                         break;
                     }
@@ -561,6 +556,9 @@ function DeployJob() {
                     /* Adding to the job's sandbox array */
                     jobObj.sdbxs.push(sdbxObj);
                 }
+
+                /* Registry to keep track of completed sandboxes */
+                rjobs.sandboxRegistry[selectedTopology.sdbxs[i].id] = {done:false, task:sdbxObj};
             }
         }
 
@@ -606,16 +604,14 @@ function DeployJob() {
                     }
                     resWin.job = rjobs.djobObj;
                     resWin.refWin = window;
+                    rjobs.retryQueue  = [];
                     window.runningJobs[jobObj.jobId] = rjobs;
 
                     /* Adding Window Reference to the window */
                     window.runningJobs[jobObj.jobId].resWin = resWin;
                     window.runningJobs[jobObj.jobId].name = rjobs.djobObj.name;
 
-                    //setTimeout( function(){
-                        executeDeployment(rjobs.djobObj);
-
-                    //}, 1000 );
+                    executeDeployment(rjobs.djobObj);
                     
                     $(this).dialog("close");
 
@@ -757,6 +753,8 @@ function addJobToExampleTable(job) {
     data[1] = "<button ex-job-name='" + job.name + "' class='ui-button ui-widget ui-state-default ui-corner-all ui-button-text-only'>&nbsp;<span class='glyphicon glyphicon-eye-open'></span>&nbsp;</button>";
     /*The Job Delete Button */
 
+    console.log(job.name);
+
     tblExampleJobs.row.add(data).draw();
 }
 
@@ -850,7 +848,7 @@ function setCodeIndicatorIcon(isValid) {
         spn.attr("class", "glyphicon glyphicon-remove-circle");
 }
 
-function initializeSocketIO() {// ------------------------------------------------------------------------------------------> Socket connection
+function initializeSocketIO() {
 
     var io = require('socket.io-client');
 
@@ -885,6 +883,8 @@ function initializeSocketIO() {// ----------------------------------------------
 
             var box = sndbx;
             avlbSandBoxes[box.id] = box;
+            avlbSandBoxes[box.id].executingJobsCount = 0;
+            avlbSandBoxes[box.id].runningJobs = [];
 
             addSandBoxToMainTable(box);
 						addSandBoxToBenchmark(box);
@@ -899,6 +899,9 @@ function initializeSocketIO() {// ----------------------------------------------
         socket.on('sandboxDisconnected', function (sndbx) {
 
             sndbx = sndbx;
+            /* Check if any object needs to be reeschedule */
+            if(avlbSandBoxes[sndbx.id].executingJobsCount > 0)
+                rescheduleJobs(avlbSandBoxes[sndbx.id]);
 
             updateDashBoard(avlbSandBoxes[sndbx.id], false)
 
@@ -911,6 +914,8 @@ function initializeSocketIO() {// ----------------------------------------------
 
             showAlert('SandBox Disconnected!', "SandBox " + sndbx.id + " has been disconnected.", true);
 
+            
+
         });
 
         /* Receive pipeListing Handler */
@@ -918,11 +923,12 @@ function initializeSocketIO() {// ----------------------------------------------
 
             var connectedSndbx = data;
 
-
             for (var i = 0; i < connectedSndbx.length; i++) {
                 avlbSandBoxes[connectedSndbx[i].id] = connectedSndbx[i];
+                avlbSandBoxes[connectedSndbx[i].id].executingJobsCount = 0;
+                avlbSandBoxes[connectedSndbx[i].id].runningJobs = [];
             }
-            ;
+            
 
             for (var key in avlbSandBoxes) {
                 addSandBoxToMainTable(avlbSandBoxes[key]);
@@ -945,11 +951,35 @@ function initializeSocketIO() {// ----------------------------------------------
 
         /* Receive Job Results */
         socket.on('jobExecutionResponse', function (results) {
+
             var rjobs = window.runningJobs[results.jobId];
             rjobs.resultSet.push(results.result);
             rjobs.numSandbox--;
-            
-            //console.log(results);
+
+            /* Registering received results */
+            rjobs.sandboxRegistry[results.sandboxSocketId].done = true;
+
+            if(rjobs.retryQueue.length > 0)
+            {
+                /* Get the front queued failed job */
+                var qJob = rjobs.retryQueue.shift();
+                /* Assign the new sandbox id to this job */
+                qJob.sdbxs[0].sandboxSocketId  = results.sandboxSocketId;
+
+                /* Registry to keep track of completed sandboxes */
+                rjobs.sandboxRegistry[results.sandboxSocketId] = {done:false, task:qJob.sdbxs[0]};
+                /* Redeploy Job */
+                executeDeployment(qJob);
+
+                /* Log Message */
+                console.log("Redeploying job "+ qJob);
+            }
+            /* Decrement sandbox's ongoing execution count and job id removal*/
+            else if(avlbSandBoxes[results.sandboxSocketId])
+            {
+                avlbSandBoxes[results.sandboxSocketId].executingJobsCount--;
+                delete avlbSandBoxes[results.sandboxSocketId].runningJobs[results.jobId];
+            }
 
             /* Updating corresponding result window */
             rjobs.resWin.changeReceived(1);
@@ -970,37 +1000,14 @@ function initializeSocketIO() {// ----------------------------------------------
                     rjobs.resWin.focus();
                 }
                 result.jobId = results.jobId;
-                console.log(result);
-                delete rjobs;
+                delete window.runningJobs[results.jobId];
             }
 
         });
 
         /* Receive Job Results */
         socket.on('jobExecutionErrorResponse', function (error) {
-            console.log("WHY ERROR?!?!");
-            var rjobs = window.runningJobs[results.jobId];
-            rjobs.numSandbox--;
-            rjobs.resWin.changeErrors(1);
-            rjobs.resWin.changePending(-1);
-            if (rjobs.numSandbox == 0) {
-                if (rjobs.hasAfterBarrier) {
 
-                    var result = runAfterBarrier(rjobs);
-                    showAlert("Job Done!", rjobs.name + " complete, verify result window.", true);
-                    rjobs.resWin.jobCompleted(result);
-                    rjobs.resWin.focus();
-                }
-                else {
-                    result = rjobs.resultSet;
-                    showAlert("Job Done!", rjobs.name + " complete, verify result window.", true);
-                    rjobs.resWin.jobCompleted(result);
-                    rjobs.resWin.focus();
-                }
-                result.jobId = results.jobId;
-                console.log(result);
-                delete rjobs;
-            }
             console.log(error);
         });
 
@@ -1013,7 +1020,6 @@ function initializeSocketIO() {// ----------------------------------------------
 						addSandBoxToBenchmark(avlbSandBoxes[box.id]);
         });
 
-
         /* Request Pipe listing */
         socket.emit("requestSandBoxListing");
         /* Request other end socket ID */
@@ -1021,6 +1027,59 @@ function initializeSocketIO() {// ----------------------------------------------
 
     });
 }
+
+function rescheduleJobs(sdbx)
+{
+    /* For all running jobs in this sandbox */
+    for(var jobId in sdbx.runningJobs)
+    {
+        /* Get the running global job entry */
+        var rjobs = window.runningJobs[jobId];
+
+        /* Saving this job to be deployed */
+        var job = JSON.parse(JSON.stringify(rjobs.djobObj));
+        job.sdbxs = [];
+        var sandboxPacket = rjobs.sandboxRegistry[sdbx.id].task;
+
+        /* Deleting this sandbox from the running job */
+        delete rjobs.sandboxRegistry[sdbx.id];
+        
+        /* Check for a free sandbox to redeploy */
+        for(var sdbxId  in rjobs.sandboxRegistry)
+        {
+            /* If this sandbox is free, redeploy */
+            if(rjobs.sandboxRegistry[sdbxId].done)
+            {
+                /* Change to new sandbox id */
+                sandboxPacket.sandboxSocketId = sdbxId;
+                /* Push into the job packet */
+                job.sdbxs.push(sandboxPacket);
+                /* SandBox found, break */
+                break;
+            }
+        }
+
+        /* If there is a sandbox free */
+        if(job.sdbxs.length > 0)
+        {
+            /* Incrementing this sandbox deployed job count */
+            avlbSandBoxes[sandboxPacket.sandboxSocketId].executingJobsCount++;
+            /* Add Running job ID to this sandBox */
+            avlbSandBoxes[sandboxPacket.sandboxSocketId].runningJobs[jobId] = {};
+            /* Registry to keep track of completed sandboxes */
+            rjobs.sandboxRegistry[sandboxPacket.sandboxSocketId] = {done:false, task:sandboxPacket};
+            /* Redeploy Job */
+            executeDeployment(job);
+        }
+        else /* If not, put it in the retry queue of this job */
+        {
+            job.sdbxs.push(sandboxPacket);
+            rjobs.retryQueue.push(job);
+        }
+
+    }
+}
+
 
 function runAfterBarrier(job) {
     try {
@@ -1266,7 +1325,7 @@ function updateDashBoard(sdbx, isAdding) {
         var ll = new google.maps.LatLng(sdbx.sysInfo.geo.ll[0], sdbx.sysInfo.geo.ll[1]);
         var marker = new google.maps.Marker({
             position: ll,
-            title: sdbx.id,
+            title: sdbx.id
             //icon: img
         });
         /* Adding infoWindow to map markers */
@@ -1386,7 +1445,7 @@ function buildToolTip(sdbx, isTableTooltip) {
 }
 
 //Build tooltip for Server
-function buildServerToolTip(serverCoordinates) {//------------------------------------------------------------------------------> Server tooltip
+function buildServerToolTip(serverCoordinates) {
   var content = "";
 
   img = 'assets/img/linux.png'
@@ -1670,7 +1729,6 @@ function secondsToTime(secs) {
     return obj;
 }
 
-//Maverick
 //Calculates distance between two points in km's (I hate miles)
 function calculateDistance(p1, p2){
   return (google.maps.geometry.spherical.computeDistanceBetween(p1, p2) / 1000).toFixed(2);

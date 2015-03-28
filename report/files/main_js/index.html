@@ -1,0 +1,1834 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Plato - main.js</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="">
+  <meta name="author" content="">
+
+  <!--[if lt IE 9]>
+  <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+  <![endif]-->
+
+  <link href="../../assets/css/vendor/morris.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/bootstrap.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/font-awesome.css" rel="stylesheet">
+  <link href="../../assets/css/vendor/codemirror.css" rel="stylesheet">
+  <link href="../../assets/css/plato.css" rel="stylesheet">
+  <link href="../../assets/css/plato-file.css" rel="stylesheet">
+
+</head>
+
+<body>
+
+<div class="navbar navbar-fixed-top">
+  <div class="container">
+    <a class="navbar-brand" href="http://github.com/es-analysis/plato">Plato on Github</a>
+    <ul class="nav navbar-nav">
+      <li>
+        <a href="../../index.html">Report Home</a>
+      </li>
+    </ul>
+  </div>
+</div>
+
+<div class="jumbotron">
+  <div class="container">
+    <h1>main.js</h1>
+  </div>
+</div>
+
+<div class="container aggregate-stats">
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Maintainability <a href="http://blogs.msdn.com/b/codeanalysis/archive/2007/11/20/maintainability-index-range-and-meaning.aspx"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="A value between 0 and 100 that represents the relative ease of maintaining the code. A high value means better maintainability." data-original-title="Maintainability Index"  data-container="body"></i></a></h2>
+      <p class="stat">62.66</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Lines of code <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h2>
+      <p class="stat">1716</p>
+    </div>
+  </div>
+  <div class="row historical">
+    <div class="col-md-6">
+      <p id="chart_historical_maint" class="chart"></p>
+    </div>
+    <div class="col-md-6">
+      <p id="chart_historical_sloc" class="chart"></p>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="header">Difficulty  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="The difficulty measure is related to the difficulty of the program to write or understand." data-original-title="Difficulty" data-container="body"></i></a></h2>
+      <p class="stat">101.49</p>
+    </div>
+    <div class="col-md-6">
+      <h2 class="header">Estimated Errors  <a href="http://en.wikipedia.org/wiki/Halstead_complexity_measures"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Halstead's delivered bugs is an estimate for the number of errors in the implementation." data-original-title="Delivered Bugs" data-container="body"></i></a></h2>
+      <p class="stat">18.82</p>
+    </div>
+  </div>
+</div>
+
+<div class="container charts">
+  <div class="row">
+    <h2 class="header">Function weight</h2>
+  </div>
+  <div class="row">
+    <div class="col-md-6">
+      <h3 class="chart-header">By Complexity <a href="http://en.wikipedia.org/wiki/Cyclomatic_complexity"><i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="This metric counts the number of distinct paths through a block of code. Lower values are better." data-original-title="Cyclomatic Complexity" data-container="body"></i></a></h3>
+      <div id="fn-by-complexity" class="stat"></div>
+    </div>
+    <div class="col-md-6">
+      <h3 class="chart-header">By SLOC  <i class="icon icon-info-sign" rel="popover" data-placement="top" data-trigger="hover" data-content="Source Lines of Code / Logical Lines of Code" data-original-title="SLOC/LSLOC" data-container="body"></i></h3>
+      <div id="fn-by-sloc" class="stat"></div>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <div class="row">
+    <textarea id="file-source" class="col-md-12">/* Wait for Document to Load */
+$(document).ready(function () {
+		/* Globals */
+		 window.serverIpAddress = &quot;23.251.156.127&quot;;
+		 window.serverHostname = &quot;worldwidecluster.com&quot;;
+		 window.geoServerCoordinates;
+		 window.hops = {};
+
+    /* Global Moment module */
+    window.moment = require(&#039;moment&#039;);
+		window.traceroute = require(&#039;traceroute&#039;);
+
+    /* Enabling Copy &amp; Paste */
+    var gui = require(&#039;nw.gui&#039;);
+    win = gui.Window.get();
+    var nativeMenuBar = new gui.Menu({
+        type: &quot;menubar&quot;
+    });
+    try {
+        nativeMenuBar.createMacBuiltin(&quot;WorldWideCluster&quot;);
+        win.menu = nativeMenuBar;
+    } catch (ex) {
+        console.log(ex.message);
+    }
+    /* Switching UI */
+    switchScreen(1);
+
+    /*  Initializing tabs */
+    $(&quot;#tabs&quot;).tabs();
+
+    /* Initialize Google Maps */
+    var mapOptions = {
+        center: {
+            lat: 25.7877,//-34.397,
+            lng: 280.2241//150.644
+        },
+        zoom: 2
+    }
+    window.gMap = new google.maps.Map(document.getElementById(&#039;map-canvas&#039;), mapOptions);
+
+    /* Initialize Table Sections */
+    window.tblSdbxTable = $(&#039;#sandboxes&#039;).DataTable({
+        &quot;lengthMenu&quot;: [5],
+        &quot;bLengthChange&quot;: false,
+        &quot;oLanguage&quot;: {
+            &quot;sEmptyTable&quot;: &quot;No Sandboxes Connected.&quot;
+        }
+    });
+
+		/* Maverick: Initialize Benchmark Table Sections */
+    window.tblBenchmarkSandboxes = $(&#039;#tblBenchmarkSandboxes&#039;).DataTable({
+        &quot;lengthMenu&quot;: [5],
+        &quot;bLengthChange&quot;: false,
+        &quot;oLanguage&quot;: {
+            &quot;sEmptyTable&quot;: &quot;No Sandboxes Connected.&quot;
+        }
+    });
+
+		/* Maverick: Initialize Traceroute Table Sections */
+    window.tblTraceroute = $(&#039;#tblTraceroute&#039;).DataTable({
+        &quot;lengthMenu&quot;: [5],
+        &quot;bLengthChange&quot;: false,
+        &quot;oLanguage&quot;: {
+            &quot;sEmptyTable&quot;: &quot;No traceroute info.&quot;
+        }
+    });
+
+		setGeoServerCoordinates();//Set Server coordinates
+
+		/* Adding Google Map Marker for Server ------------------------------------------------------------------------------------------*/
+
+	/*	var delay=2000;//1 seconds, it is necessary to give enough time to obtain server coordinates
+    setTimeout(function(){
+				var marker = new google.maps.Marker({
+					position: window.geoServerCoordinates,
+					title: &quot;Server&quot;,
+					icon: &#039;./images/vi-icon-linux.png&#039;
+				});
+				//Adding infoWindow to map markers
+				var infowindow = new google.maps.InfoWindow({
+						content: buildServerToolTip(window.geoServerCoordinates)
+				});
+
+				google.maps.event.addListener(marker, &#039;click&#039;, function () {
+						infowindow.open(gMap, marker);
+				});
+
+				marker.setMap(gMap);
+    },delay);
+    */
+
+    $(&#039;#sandboxes tbody&#039;).on(&#039;click&#039;, &#039;tr&#039;, function () {
+        $(this).toggleClass(&#039;selected&#039;);
+    });
+    window.tblSlctSdbxTable = $(&#039;#Selectedsandboxes&#039;).DataTable({
+        &quot;lengthMenu&quot;: [5],
+        &quot;bLengthChange&quot;: false,
+        &quot;oLanguage&quot;: {
+            &quot;sEmptyTable&quot;: &quot;No Sandboxes selected.&quot;
+        }
+    });
+    $(&#039;#Selectedsandboxes tbody&#039;).on(&#039;click&#039;, &#039;tr&#039;, function () {
+        $(this).toggleClass(&#039;selected&#039;);
+    });
+    $(&quot;#btnAddToSelSdbx&quot;).button().click(function () {
+
+        transferSelectedSandBoxes();
+
+    });
+    $(&quot;#btnSaveTopology&quot;).button().click(function () {
+        addNewTopology();
+        refreshTopologiesTable();
+    });
+
+    /* Tooltip Section */
+    $(document).tooltip({
+        items: &quot;[box-id], [top-name], [top-name-sdbx],[job-name], [ex-job-name]&quot;,
+        content: function () {
+            var element = $(this);
+
+            if (element.is(&quot;[box-id]&quot;)) {
+
+                var id = element.attr(&#039;box-id&#039;);
+                var box = avlbSandBoxes[id];
+                return buildToolTip(box, true);
+
+            } else if (element.is(&quot;[top-name]&quot;)) {
+
+                var name = element.attr(&#039;top-name&#039;);
+                var top = getTopologyFromArray(topologiesArr, name);
+
+                return top.desc;
+
+            } else if (element.is(&quot;[top-name-sdbx]&quot;)) {
+                var name = element.attr(&#039;top-name-sdbx&#039;);
+                var top = getTopologyFromArray(topologiesArr, name);
+
+                return &quot;Not Yet Implemented&quot;;
+
+            } else if (element.is(&quot;[job-name]&quot;)) {
+                var name = element.attr(&#039;job-name&#039;);
+                var job = getJob(name);
+
+                return job.desc;
+            } else if (element.is(&quot;[ex-job-name]&quot;)) {
+                var name = element.attr(&#039;ex-job-name&#039;);
+
+                var job = getExJob(name);
+
+                return job.desc;
+            }
+        }
+    });
+
+    /************************** DEPLOY SECTION *********************************/
+
+    window.tblTopologies = $(&#039;#tblTopologies&#039;).DataTable({
+        &quot;lengthMenu&quot;: [3],
+        &quot;bLengthChange&quot;: false,
+        &quot;oLanguage&quot;: {
+            &quot;sEmptyTable&quot;: &quot;No Topologies Created.&quot;
+        },
+        &quot;tableTools&quot;: {
+            &quot;sRowSelect&quot;: &quot;single&quot;
+        }
+    });
+    $(&#039;#tblTopologies tbody&#039;).on(&#039;click&#039;, &#039;tr&#039;, function () {
+
+        if ($(this).hasClass(&#039;selected&#039;)) {
+            $(this).removeClass(&#039;selected&#039;);
+        } else {
+            tblTopologies.$(&#039;tr.selected&#039;).removeClass(&#039;selected&#039;);
+            $(this).addClass(&#039;selected&#039;);
+        }
+
+        /* save selected topology object*/
+        if (topologiesArr.length &gt; 0) {
+            var topologyName = this.children[0].innerHTML;
+            selectedTopology = getTopologyFromArray(topologiesArr, topologyName);
+        }
+
+    });
+
+    window.tblJobs = $(&#039;#tblJobs&#039;).DataTable({
+        &quot;lengthMenu&quot;: [5],
+        &quot;bLengthChange&quot;: false,
+        &quot;oLanguage&quot;: {
+            &quot;sEmptyTable&quot;: &quot;No Jobs Created.&quot;
+        }
+    });
+    $(&#039;#tblJobs tbody&#039;).on(&#039;click&#039;, &#039;tr&#039;, function () {
+
+        if ($(this).hasClass(&#039;selected&#039;)) {
+            $(this).removeClass(&#039;selected&#039;);
+        } else {
+            tblJobs.$(&#039;tr.selected&#039;).removeClass(&#039;selected&#039;);
+            $(this).addClass(&#039;selected&#039;);
+        }
+
+        /* Loading Job Form Data */
+        if (savedJobsArr.length &gt; 0) {
+            var jobName = this.children[0].innerHTML;
+            loadJobForm(jobName);
+
+            /* If code window is open, set corresponding code */
+            if (isEditorWinOpen)
+                editWin.loadExternalCode(getJob(jobName));
+        }
+
+    });
+
+    window.tblExampleJobs = $(&#039;#tblExampleJobs&#039;).DataTable({
+        &quot;lengthMenu&quot;: [5],
+        &quot;bLengthChange&quot;: false,
+        &quot;oLanguage&quot;: {
+            &quot;sEmptyTable&quot;: &quot;No Jobs Created.&quot;
+        }
+    });
+    $(&#039;#tblExampleJobs tbody&#039;).on(&#039;click&#039;, &#039;tr&#039;, function () {
+        if ($(this).hasClass(&#039;selected&#039;)) {
+            $(this).removeClass(&#039;selected&#039;);
+        } else {
+            tblExampleJobs.$(&#039;tr.selected&#039;).removeClass(&#039;selected&#039;);
+            $(this).addClass(&#039;selected&#039;);
+        }
+
+        /* Loading Job Form Data */
+        if (exampleJobsArr.length &gt; 0) {
+            var jobName = this.children[0].innerHTML;
+            loadExJobForm(jobName);
+
+            /* If code window is open, set corresponding code */
+            if (isEditorWinOpen)
+                editWin.loadExternalCode(getExJob(jobName));
+        }
+    });
+    $(&quot;#btnKernelAndParams&quot;).button().click(function () {
+
+        window.editWin = window.open(&#039;kernelAndParams.html&#039;, {
+            &quot;position&quot;: &quot;right&quot;,
+            &quot;height&quot;: 870,
+            &quot;focus&quot;: true,
+            &quot;toolbar&quot;: false,
+            &quot;resizable&quot;: false,
+            &quot;frame&quot;: false
+        });
+
+        /* Setting selected job into the new window */
+        editWin.selectedJob = selectedJob;
+        editWin.refWin = window;
+
+        /* This function will be called from the code
+         * editor window context.
+         */
+        editWin.saveJobCode = function (code) {
+            parent.selectedJob.code = code;
+            parent.setCodeIndicatorIcon(true);
+            parent.isEditorWinOpen = false;
+        };
+
+        /*Set Open Window flag */
+        isEditorWinOpen = true;
+
+    });
+
+    $(&quot;#btnCreateNewJob&quot;).button().click(function () {
+
+        showMessage(&quot;You are now in the Create New Job mode. Note that if a job is selected from the table, you will be editing that job instead of creating a new one.&quot;);
+        /* Reinitializing Current Selected job object */
+        selectedJob = {};
+
+        /* Clearing Form */
+        $(&quot;#txtJobName&quot;).val(&quot;&quot;);
+        $(&quot;#txtJobDesc&quot;).val(&quot;&quot;);
+        setCodeIndicatorIcon(false);
+        tblJobs.$(&#039;tr.selected&#039;).removeClass(&#039;selected&#039;);
+    });
+
+    $(&quot;#btnSaveJob&quot;).button().click(function () {
+        SaveJob();
+    });
+
+    /* Window Closing Event */
+    var gui = require(&#039;nw.gui&#039;);
+    // Get the current window
+    var win = gui.Window.get();
+
+    /* On close save data */
+    win.on(&#039;close&#039;, function () {
+        /* Saving Topologies and Jobs back to localstorage */
+        localStorage.setItem(&#039;topologies&#039;, JSON.stringify(topologiesArr));
+        localStorage.setItem(&#039;jobs&#039;, JSON.stringify(savedJobsArr));
+
+        this.close(true);
+    });
+
+    /* On error Handling */
+    process.on(&quot;uncaughtException&quot;, function (e) {
+        showError(&quot;An Error Ocurred! If this persist please restart the client. &quot; + e.toString());
+    });
+
+    /* Update Sandbox table times */
+    setInterval(function () {
+
+        $(&quot;#sandboxes tbody tr&quot; ).each(function () {
+           var sdbx =  avlbSandBoxes[this.children[0].innerHTML];
+            if(sdbx)
+                this.children[3].innerHTML = moment(sdbx.sysInfo.uptime).fromNow();
+        });
+
+    }, 3000);
+
+    /* Extracting Dashboard Labels */
+    window.lblSandBoxNum = $(&quot;#lblSandBoxNum&quot;);
+    window.lblFlops = $(&quot;#lblFlops&quot;);
+    window.lblMemory = $(&quot;#lblMemory&quot;);
+    window.lblBrowserSdbx = $(&quot;#lblBrowserSdbx&quot;);
+    window.lblNativeSdbx = $(&quot;#lblNativeSdbx&quot;);
+
+    /* System Arrays */
+    window.avlbSandBoxes = [];
+    window.topologiesArr = [];
+    window.slctTableArr = [];
+    window.exampleJobsArr = [];
+    window.savedJobsArr = [];
+    window.runningJobs = [];
+
+    /*Global Variables */
+    window.selectedJob = {};
+    window.selectedTopology = null;
+    window.editWin = null;
+    window.isEditorWinOpen = false;
+
+    /* Restore Topologies */
+    restoreTopologies();
+    /* Load Job Examples */
+    loadExamples();
+
+    /* Restore Jobs */
+    restoreJobs();
+    refreshJobsTable();
+
+    /* Initialize socket.io communication and data*/
+    initializeSocketIO();
+});
+
+function loadExamples() {
+
+
+    /* TODO: create example storage mechanism
+     localStorage = require(&#039;localStorage&#039;);
+     exampleJobsArr = localStorage.getItem(&quot;topologies&quot;);
+     if (exampleJobsArr != null)
+     exampleJobsArr = JSON.parse(topologiesArr);
+     else
+     exampleJobsArr = [];
+     */
+
+    /* Instantiate the json requester */
+    window.jsonClient = require(&#039;request-json&#039;).newClient(&#039;https://raw.githubusercontent.com/mastayoda/wwcl-examples/master/&#039;);
+
+    /* Request JSON example index array */
+    jsonClient.get(&#039;exampleIndex.json&#039;, null, function (err, res, body) {
+
+        var exIndexArr = body.arr;
+        /* Get all examples */
+        for (var i = 0; i &lt; exIndexArr.length; i++) {
+            console.log(exIndexArr[i]);
+            jsonClient.get(exIndexArr[i], null, function (err, res, body) {
+
+                var rawJob = body;
+                var job = {};
+                job.code = {};
+                job.code.afterBarrierCode = rawJob.afBarrFunc;
+                job.code.hasAfterBarrier = rawJob.hasAftBarr;
+                job.code.isPartitioned = rawJob.isPartitioned;
+                job.code.hasContext = rawJob.hasContext;
+                job.code.context = rawJob.context;
+                job.code.kernelCode = rawJob.kernel;
+                job.code.paramsAndData = JSON.stringify(rawJob.params);
+
+                job.name = rawJob.name;
+                job.desc = rawJob.desc;
+
+                exampleJobsArr.push(job);
+                addJobToExampleTable(job);
+            });
+        }
+
+
+    });
+
+}
+
+function loadJobForm(name) {
+
+    var spn = $(&quot;#spnIndicator&quot;);
+    var txtJobName = $(&quot;#txtJobName&quot;);
+    var txtJobDesc = $(&quot;#txtJobDesc&quot;);
+    var job = getJob(name);
+
+    /* Setting Valid Code */
+    setCodeIndicatorIcon(job.code !== undefined)
+
+    /* Setting Data */
+    txtJobName.val(job.name);
+    txtJobDesc.val(job.desc);
+
+    /* Setting Object */
+    selectedJob = job;
+}
+
+function loadExJobForm(name) {
+
+    var spn = $(&quot;#spnIndicator&quot;);
+    var txtJobName = $(&quot;#txtJobName&quot;);
+    var txtJobDesc = $(&quot;#txtJobDesc&quot;);
+    var job = getExJob(name);
+
+    /* Setting Valid Code */
+    setCodeIndicatorIcon(job.code !== undefined)
+
+    /* Setting Data */
+    txtJobName.val(job.name);
+    txtJobDesc.val(job.desc);
+
+    /* This is the same but will just copy the job */
+    selectedJob = job;
+    selectedJob.code.isExample = true;
+}
+
+function DeployJob() {
+    /* Execute Selected Job */
+    if (selectedJob.name &amp;&amp; selectedTopology) {
+
+        /* Object for the whole job */
+        var chance = require(&#039;chance&#039;).Chance();
+        var jobObj = {};
+        jobObj.sdbxs = [];
+        jobObj.name = selectedJob.name;
+        /* Partitioning variable, used to track the partitioning index range*/
+        var partitiningIndex = 0;
+        jobObj.clientSocketId = socketSessionID;
+        jobObj.jobId = chance.guid();
+
+        /* Extracting job dialog variables */
+        var totalFlops = 0;
+        var dspnJobName = $(&quot;#dspnJobName&quot;);
+        var dspnJobDataPld = $(&quot;#dspnJobDataPld&quot;);
+        var dspnJobKrnlPld = $(&quot;#dspnJobKrnlPld&quot;);
+        var dspnJobParti = $(&quot;#dspnJobParti&quot;);
+        var dspnTopoName = $(&quot;#dspnTopoName&quot;);
+        var dspnTopoSdbxCount = $(&quot;#dspnTopoSdbxCount&quot;);
+        var dspnTopoFLOPS = $(&quot;#dspnTopoFLOPS&quot;);
+
+        /* Calculating the FLOPS and building sadboxes array */
+        for (var i = 0; i &lt; selectedTopology.sdbxs.length; i++) {
+            if (selectedTopology.sdbxs[i].isPresent) {
+
+                totalFlops += avlbSandBoxes[selectedTopology.sdbxs[i].id].sysInfo.pFlops;
+                selectedTopology.sdbxs[i].pFlops = avlbSandBoxes[selectedTopology.sdbxs[i].id].sysInfo.pFlops;
+            }
+        }
+
+        /* Sort Array descending by flops(faster sandboxes first) */
+        if (selectedJob.code.isPartitioned) {
+            selectedTopology.sdbxs.sort(sandboxSortArrayByFlops);
+            var partitioningData = eval(selectedJob.code.paramsAndData);
+            /* Copying object */
+            var codeObj = $.extend({}, selectedJob.code);
+            codeObj.paramsAndData = {};
+        }
+
+        /* Create HashMap JobID -&gt; result set, #sandbox, code barrier*/
+        var rjobs = {};
+        rjobs.hasAfterBarrier = selectedJob.code.hasAfterBarrier;
+        if (selectedJob.code.hasAfterBarrier) {
+            rjobs.afterBarrierCode = selectedJob.code.afterBarrierCode;
+        }
+        rjobs.resultSet = [];
+        rjobs.numSandbox = 0;
+
+        /* Calculating total flops and sandboxes for the job*/
+        for (var i = 0; i &lt; selectedTopology.sdbxs.length; i++) {
+            if (selectedTopology.sdbxs[i].isPresent) {
+                /* Setting the sandbox properties */
+                var sdbxObj = {};
+                sdbxObj.clientSocketId = jobObj.clientSocketId;
+                sdbxObj.sandboxSocketId = selectedTopology.sdbxs[i].id;
+                sdbxObj.jobId = jobObj.jobId;
+
+                /*Set #sandbox to wait for*/
+                rjobs.numSandbox++;
+
+                /* If data is partitioned, balance data assignment */
+                if (selectedJob.code.isPartitioned) {
+                    /* Copying the plain object */
+                    sdbxObj.jobCode = $.extend({}, codeObj);
+
+                    /* Weighting sandbox data distribution by flops capacity */
+                    var weight = Math.ceil(selectedTopology.sdbxs[i].pFlops / totalFlops * partitioningData.length);
+                    /* Partitioning */
+                    sdbxObj.jobCode.paramsAndData = JSON.stringify(partitioningData.slice(partitiningIndex, partitiningIndex + weight));
+                    sdbxObj.jobCode.pRange = [partitiningIndex, partitiningIndex + sdbxObj.jobCode.paramsAndData.length];
+                    /* Adding the sandbox */
+                    jobObj.sdbxs.push(sdbxObj);
+
+                    /* Deciding if continue or done with partitioning */
+                    if (partitioningData.length - (partitiningIndex + weight) &gt; 0)
+                        partitiningIndex += weight;
+                    else
+                        break;
+                }
+                else /* Just assign the data and push the sandbox */
+                {
+                    sdbxObj.jobCode = selectedJob.code;
+                    /* Adding to the job&#039;s sandbox array */
+                    jobObj.sdbxs.push(sdbxObj);
+                }
+            }
+        }
+
+        /*Set HashMap*/
+        rjobs.isPartitioned = selectedJob.code.isPartitioned;
+
+        /* Setting dialog text */
+        dspnJobName.html(selectedJob.name);
+        dspnJobDataPld.html(JSON.stringify(selectedJob.code.paramsAndData).length + &quot; bytes&quot;);
+        dspnJobKrnlPld.html(JSON.stringify(selectedJob.code.kernelCode).length + &quot; bytes&quot;);
+        dspnJobParti.html(selectedJob.isPartitioned);
+        dspnTopoName.html(selectedTopology.name);
+        dspnTopoSdbxCount.html(selectedTopology.presentCount);
+        dspnTopoFLOPS.html(totalFlops + &quot; GFLOPS&quot;);
+
+        window.djobObj = jobObj;
+
+        /* Display Dialog */
+        $(&quot;#dialog-deploy-job&quot;).dialog({
+            resizable: false,
+            modal: true,
+            buttons: {
+                &quot;Yes&quot;: function () {
+
+                    var randomnumber = Math.floor((Math.random() * 100) + 1);
+                    var resWin = window.open(&#039;runningJob.html&#039;, &quot;_blank&quot;, &#039;PopUp&#039;, randomnumber, {
+                        &quot;position&quot;: &quot;right&quot;,
+                        &quot;height&quot;: 535,
+                        &quot;width&quot;: 415,
+                        &quot;focus&quot;: true,
+                        &quot;toolbar&quot;: false,
+                        &quot;frame&quot;: false,
+                        &quot;resizable&quot;: false
+                    });
+
+                    /* Setting selected job into the new window */
+                    rjobs.djobObj = $.extend({}, jobObj);
+                    rjobs.djobObj.startTime = new Date();
+                    rjobs.djobObj.hasContext = selectedJob.code.hasContext;
+                    if (selectedJob.code.hasContext) {
+                        rjobs.djobObj.context = selectedJob.code.context;
+                    }
+                    resWin.job = rjobs.djobObj;
+                    resWin.refWin = window;
+                    window.runningJobs[jobObj.jobId] = rjobs;
+
+                    /* Adding Window Reference to the window */
+                    window.runningJobs[jobObj.jobId].resWin = resWin;
+                    window.runningJobs[jobObj.jobId].name = rjobs.djobObj.name;
+
+                    executeDeployment(rjobs.djobObj);
+                    $(this).dialog(&quot;close&quot;);
+
+                },
+                &quot;Cancel&quot;: function () {
+                    delete rjobs;
+                    $(this).dialog(&quot;close&quot;);
+                }
+            }
+        });
+
+    } else {
+        showError(&quot;You must select a topology and a job before deploy.&quot;);
+    }
+}
+
+function sandboxSortArrayByFlops(a, b) {
+    if (a.pFlops &gt; b.pFlops)
+        return -1;
+    if (a.pFlops &lt; b.pFlops)
+        return 1;
+    return 0;
+}
+
+function executeDeployment(jobObj) {
+    socket.emit(&quot;jobDeploymentRequest&quot;, jobObj);
+}
+
+function SaveJob() {
+
+    var spn = $(&quot;#spnIndicator&quot;);
+    var txtJobName = $(&quot;#txtJobName&quot;);
+    var txtJobDesc = $(&quot;#txtJobDesc&quot;);
+    var isNew;
+
+    /* Check if Code is valid */
+    if (spn.attr(&quot;class&quot;) != &quot;glyphicon glyphicon-ok-circle&quot;) {
+        showError(&quot;Kernel &amp; Parameters for this Job is are not valid, please make corrections.&quot;);
+        return;
+    }
+
+    /* Check if Job name already exist */
+    if (getJob(txtJobName.val().trim()) != null &amp;&amp; selectedJob.name === undefined) {
+        showError(&quot;A job with the same name already exist, please choose another job name, or edit the existing one.&quot;);
+        return;
+    }
+
+    /* Check if the example to clone conflicts with an existing job name */
+    if (getJob(txtJobName.val().trim()) != null &amp;&amp; selectedJob.code.isExample) {
+        showError(&quot;A job with the same name already exist, please choose another job name, or edit the existing one.&quot;);
+        return;
+    }
+
+    /* Restoring job */
+    var job = selectedJob;
+    var originalName = selectedJob.name;
+    var isExample = job.code.isExample;
+    isNew = selectedJob.name === undefined;
+
+    /* Updating Properties */
+    job.name = txtJobName.val().trim();
+    job.desc = txtJobDesc.val().trim();
+
+    /* Storing or editing job */
+    /* If a new job, create Object, if selected job, assign reference */
+    if (isNew || job.code.isExample) {
+        /* Deleting example indicator */
+        if(isExample)
+            delete job.code.isExample;
+
+        savedJobsArr.push(job);
+    }
+    else
+        updateJob(job, originalName);
+
+    /* Refreshing Local Storage */
+    localStorage.setItem(&#039;jobs&#039;, JSON.stringify(savedJobsArr));
+    /* Refresh Table */
+    refreshJobsTable();
+
+    /*Show save message */
+    if(isExample)
+        showMessage(&quot;This example has been saved as a new job, you can find it under &#039;My Jobs&#039; tab&quot;);
+    else
+        showMessage(&quot;Job sucessfully saved&quot;);
+}
+
+function updateJob(job, oName) {
+    /* Searching Job*/
+    for (var i = 0; i &lt; savedJobsArr.length; i++) {
+        /* Restore Jobs into the table */
+        if (savedJobsArr[i].name == oName) {
+            return savedJobsArr[i] = job;
+        }
+    }
+    return;
+}
+
+function refreshJobsTable() {
+    /*Clearing topologies table and rebuild*/
+    tblJobs.clear().draw();
+    restoreJobsTable();
+}
+
+function restoreJobsTable() {
+
+    /* Restore Jobs into the table */
+    for (var i = 0; i &lt; savedJobsArr.length; i++) {
+
+        /* Restore Jobs into the table */
+        var job = savedJobsArr[i];
+
+        /* Adding Job to the table */
+        addJobToTable(job);
+    }
+}
+
+function addJobToTable(job) {
+
+    var data = [];
+
+    /*The Job Name*/
+    data[0] = job.name;
+    /*The Job Description*/
+    data[1] = &quot;&lt;button job-name=&#039;&quot; + job.name + &quot;&#039; class=&#039;ui-button ui-widget ui-state-default ui-corner-all ui-button-text-only&#039;&gt;&amp;nbsp;&lt;span class=&#039;glyphicon glyphicon-eye-open&#039;&gt;&lt;/span&gt;&amp;nbsp;&lt;/button&gt;&quot;;
+    /*The Job Delete Button */
+    data[2] = &quot;&lt;button onClick=&#039;deleteJob(\&quot;&quot; + job.name + &quot;\&quot;)&#039; class =&#039;ui-button ui-widget ui-state-default ui-corner-all ui-button-text-only&#039;&gt;&amp;nbsp;&lt;span class=&#039;glyphicon glyphicon-remove&#039;&gt;&lt;/span&gt;&amp;nbsp;&lt;/button&gt;&quot;;
+
+    tblJobs.row.add(data).draw();
+}
+
+function addJobToExampleTable(job) {
+
+    var data = [];
+
+    /*The Job Name*/
+    data[0] = job.name;
+    /*The Job Description*/
+    data[1] = &quot;&lt;button ex-job-name=&#039;&quot; + job.name + &quot;&#039; class=&#039;ui-button ui-widget ui-state-default ui-corner-all ui-button-text-only&#039;&gt;&amp;nbsp;&lt;span class=&#039;glyphicon glyphicon-eye-open&#039;&gt;&lt;/span&gt;&amp;nbsp;&lt;/button&gt;&quot;;
+    /*The Job Delete Button */
+
+    tblExampleJobs.row.add(data).draw();
+}
+
+function getJob(jobName) {
+
+    /* Searching Job*/
+    for (var i = 0; i &lt; savedJobsArr.length; i++) {
+        /* Restore Jobs into the table */
+        if (savedJobsArr[i].name == jobName)
+            return savedJobsArr[i];
+    }
+    return null;
+}
+
+function getExJob(jobName) {
+
+    /* Searching Job*/
+    for (var i = 0; i &lt; exampleJobsArr.length; i++) {
+        /* Restore Jobs into the table */
+        if (exampleJobsArr[i].name == jobName)
+            return exampleJobsArr[i];
+    }
+    return null;
+}
+
+function deleteJob(jobName) {
+
+    /* Set temporary job name variable */
+    window.tJobName = jobName;
+
+    $(&quot;#dialog-confirm-job&quot;).dialog({
+        resizable: false,
+        modal: true,
+        buttons: {
+            &quot;Yes&quot;: function () {
+                /* Deleting Topology */
+                var name = window.tJobName;
+                /* Deleting topology from array */
+                deleteJobFromArray(name);
+                /* Saving Topologies back to localstorage */
+                localStorage.setItem(&#039;jobs&#039;, JSON.stringify(savedJobsArr));
+                /* Refreshing topology table */
+                refreshJobsTable();
+
+                /* Clearing Form */
+                $(&quot;#txtJobName&quot;).val(&quot;&quot;);
+                $(&quot;#txtJobDesc&quot;).val(&quot;&quot;);
+                setCodeIndicatorIcon(false);
+
+                $(this).dialog(&quot;close&quot;);
+            },
+            Cancel: function () {
+                $(this).dialog(&quot;close&quot;);
+            }
+        }
+    });
+}
+
+function showError(error) {
+
+    $(&quot;#errorText&quot;).html(error);
+    $(&quot;#dialogError&quot;).dialog({
+        modal: false,
+        buttons: {
+            Ok: function () {
+                $(this).dialog(&quot;close&quot;);
+            }
+        }
+    });
+}
+
+function showMessage(msg) {
+    $(&quot;#msgText&quot;).html(msg);
+    $(&quot;#dialogMsg&quot;).dialog({
+        modal: false,
+        buttons: {
+            Ok: function () {
+                $(this).dialog(&quot;close&quot;);
+            }
+        }
+    });
+}
+
+function setCodeIndicatorIcon(isValid) {
+
+    var spn = $(&quot;#spnIndicator&quot;);
+
+    if (isValid)
+        spn.attr(&quot;class&quot;, &quot;glyphicon glyphicon-ok-circle&quot;);
+    else
+        spn.attr(&quot;class&quot;, &quot;glyphicon glyphicon-remove-circle&quot;);
+}
+
+function initializeSocketIO() {// ------------------------------------------------------------------------------------------&gt; Socket connection
+
+    var io = require(&#039;socket.io-client&#039;);
+
+    var sysInfo = dumpSystemInfo();
+
+    window.socket = io.connect(&#039;https://wwcl-server-mastayoda1.c9.io&#039;, {
+        query: &#039;isClient=&#039; + true + &#039;&amp;&#039; + &#039;sysInfo=&#039; + JSON.stringify(sysInfo)
+    });
+
+    /* Connection succeed */
+    socket.on(&#039;connect&#039;, function () {
+
+
+        /* Reconnect Event */
+        socket.on(&#039;reconnect&#039;, function () {
+
+            socket.emit(&quot;requestSandBoxListing&quot;);
+            showAlert(&#039;Reconnected!&#039;, &quot;This client has been Reconnected, all data will be retrieved again.&quot;, false)
+
+        });
+
+        /* Disconnect handler */
+        socket.on(&#039;disconnect&#039;, function () {
+
+            clearAllData();
+            showAlert(&#039;Connection Closed!&#039;, &quot;This client has been disconnected, check your connection or try to restart the client.&quot;, false)
+
+        });
+
+        /* New Pipe Connected handler */
+        socket.on(&#039;sandBoxConnected&#039;, function (sndbx) {
+
+            var box = sndbx;
+            avlbSandBoxes[box.id] = box;
+
+            addSandBoxToMainTable(box);
+						addSandBoxToBenchmark(box);
+
+            updateDashBoard(box, true);
+
+            showAlert(&#039;New SandBox Connected!&#039;, &quot;A new SandBox has join the cluster.&quot;, box, true);
+
+        });
+
+        /* New Pipe Disconnected handler */
+        socket.on(&#039;sandboxDisconnected&#039;, function (sndbx) {
+
+            sndbx = sndbx;
+
+            updateDashBoard(avlbSandBoxes[sndbx.id], false)
+
+            avlbSandBoxes.splice(avlbSandBoxes.indexOf(sndbx.id), 1);
+
+            removeSandBoxFromMainTable(sndbx.id);
+						removeSandBoxFromBenchmark(sndbx.id);
+
+            refreshTopologiesTable();
+
+            showAlert(&#039;SandBox Disconnected!&#039;, &quot;SandBox &quot; + sndbx.id + &quot; has been disconnected.&quot;, true);
+
+        });
+
+        /* Receive pipeListing Handler */
+        socket.on(&#039;reponseSandboxListing&#039;, function (data) {
+
+            var connectedSndbx = data;
+
+
+            for (var i = 0; i &lt; connectedSndbx.length; i++) {
+                avlbSandBoxes[connectedSndbx[i].id] = connectedSndbx[i];
+            }
+            ;
+
+            for (var key in avlbSandBoxes) {
+                addSandBoxToMainTable(avlbSandBoxes[key]);
+								addSandBoxToBenchmark(avlbSandBoxes[key]);
+                updateDashBoard(avlbSandBoxes[key], true)
+            }
+            ;
+
+            showAlert(&#039;SandBoxes Added!&#039;, connectedSndbx.length + &quot; SandBoxes have been added.&quot;, true);
+
+            /* Restoring Topologies according to available sandboxes */
+            restoreTopologiesTable();
+        });
+
+        /* Receive pipeListing Handler */
+        socket.on(&#039;socketIDResponse&#039;, function (socketId) {
+            /* Receiving socket id*/
+            window.socketSessionID = socketId;
+        });
+
+        /* Receive Job Results */
+        socket.on(&#039;jobExecutionResponse&#039;, function (results) {
+            var rjobs = window.runningJobs[results.jobId];
+            rjobs.resultSet.push(results.result);
+            rjobs.numSandbox--;
+            console.log(results);
+
+            /* Updating corresponding result window */
+            rjobs.resWin.changeReceived(1);
+            rjobs.resWin.changePending(-1);
+
+            if (rjobs.numSandbox == 0) {
+                if (rjobs.hasAfterBarrier) {
+
+                    var result = runAfterBarrier(rjobs);
+                    showAlert(&quot;Job Done!&quot;, rjobs.name + &quot; complete, verify result window.&quot;, true);
+                    rjobs.resWin.jobCompleted(result.r.result);
+                    rjobs.resWin.focus();
+                }
+                else {
+                    result = rjobs.resultSet;
+                    showAlert(&quot;Job Done!&quot;, rjobs.name + &quot; complete, verify result window.&quot;, true);
+                    rjobs.resWin.jobCompleted(result);
+                    rjobs.resWin.focus();
+                }
+                result.jobId = results.jobId;
+                console.log(result);
+                delete rjobs;
+            }
+
+        });
+
+        /* Receive Job Results */
+        socket.on(&#039;jobExecutionErrorResponse&#039;, function (error) {
+            console.log(&quot;WHY ERROR?!?!&quot;);
+            var rjobs = window.runningJobs[results.jobId];
+            rjobs.numSandbox--;
+            rjobs.resWin.changeErrors(1);
+            rjobs.resWin.changePending(-1);
+            if (rjobs.numSandbox == 0) {
+                if (rjobs.hasAfterBarrier) {
+
+                    var result = runAfterBarrier(rjobs);
+                    showAlert(&quot;Job Done!&quot;, rjobs.name + &quot; complete, verify result window.&quot;, true);
+                    rjobs.resWin.jobCompleted(result);
+                    rjobs.resWin.focus();
+                }
+                else {
+                    result = rjobs.resultSet;
+                    showAlert(&quot;Job Done!&quot;, rjobs.name + &quot; complete, verify result window.&quot;, true);
+                    rjobs.resWin.jobCompleted(result);
+                    rjobs.resWin.focus();
+                }
+                result.jobId = results.jobId;
+                console.log(result);
+                delete rjobs;
+            }
+            console.log(error);
+        });
+
+				/* RTT Refresh handler */
+        socket.on(&#039;RTTRefresh&#039;, function(sndbx) {
+            var box = sndbx;
+						removeSandBoxFromBenchmark(box.id);
+						avlbSandBoxes[box.id].sysInfo.RTT = box.RTT;
+
+						addSandBoxToBenchmark(avlbSandBoxes[box.id]);
+        });
+
+
+        /* Request Pipe listing */
+        socket.emit(&quot;requestSandBoxListing&quot;);
+        /* Request other end socket ID */
+        socket.emit(&quot;requestSocketID&quot;);
+
+    });
+}
+
+function runAfterBarrier(job) {
+    try {
+        var resultArr = [];
+
+        if (job.isPartitioned) {
+            /* If partitioned clean results into regular array */
+            for (var i = 0; i &lt; job.resultSet.length; i++) {
+                for (var j = 0; j &lt; job.resultSet[i].length; j++) {
+                    resultArr.push(job.resultSet[i][j].result);
+                }
+            }
+
+        }
+        else /* Just pass the collected results */
+            resultArr = job.resultSet;
+
+        /* Building function */
+        var avFunc = eval(&quot;b=function(resultsArr){var resultbkp=resultsArr.slice(0);var result=&#039;&#039;;try{&quot; + job.afterBarrierCode + &quot;}catch(ex){return{\&quot;e\&quot;:&#039;Error Ocurred, Returning previous data(resultArr).&#039;+ex.toString(),\&quot;r\&quot;:resultbkp}}if(result===&#039;&#039;)return{\&quot;e\&quot;:&#039;result variable not set! Returning previous data(resultArr).&#039;,\&quot;r\&quot;:resultbkp};else return{\&quot;e\&quot;:&#039;&#039;,\&quot;r\&quot;:result};}&quot;);
+        var result = avFunc(resultArr);
+        return result;
+    } catch (ex) {
+        showError(&quot;Your &lt;b&gt;After Barrier&lt;/b&gt; code is not valid, please make corrections and try again.\n\n&quot; + ex);
+        return job.resultSet;
+    }
+}
+
+function exitClient() {
+    /* Exiting process */
+    process.exit();
+    window.close();
+}
+
+function getTopologyFromArray(arr, name) {
+
+    for (var i = 0; i &lt; arr.length; i++) {
+        if (arr[i].name == name)
+            return arr[i];
+    }
+
+    return null;
+}
+
+function deleteTopologyFromArray(name) {
+
+    for (var i = 0; i &lt; topologiesArr.length; i++) {
+        if (topologiesArr[i].name == name) {
+            topologiesArr.splice(i, 1);
+            return;
+        }
+    }
+}
+
+function deleteJobFromArray(name) {
+
+    for (var i = 0; i &lt; savedJobsArr.length; i++) {
+        if (savedJobsArr[i].name == name) {
+            savedJobsArr.splice(i, 1);
+            return;
+        }
+    }
+}
+
+function restoreTopologies() {
+
+    window.localStorage = require(&#039;localStorage&#039;);
+    /* Restoring topolgoies */
+    topologiesArr = localStorage.getItem(&quot;topologies&quot;);
+    if (topologiesArr != null)
+        topologiesArr = JSON.parse(topologiesArr);
+    else
+        topologiesArr = [];
+}
+
+function restoreJobs() {
+
+    window.localStorage = require(&#039;localStorage&#039;);
+    /* Restoring topolgoies */
+    savedJobsArr = localStorage.getItem(&quot;jobs&quot;);
+    if (savedJobsArr != null)
+        savedJobsArr = JSON.parse(savedJobsArr);
+    else
+        savedJobsArr = [];
+}
+
+function restoreTopologiesTable() {
+
+    /* Restore Topologies into the table */
+    for (var i = 0; i &lt; topologiesArr.length; i++) {
+
+        /* Getting Current Topology Reference */
+        var top = topologiesArr[i];
+
+        /* Assuming that all sandboxes are present */
+        top.presentCount = top.sdbxs.length;
+
+        /* Verifying topology Sandboxes presense */
+        for (var j = 0; j &lt; top.sdbxs.length; j++) {
+            if (avlbSandBoxes[top.sdbxs[j].id] == undefined) {
+                top.hasMissingSdbxs = true;
+                top.sdbxs[j].isPresent = false;
+                top.presentCount--;
+            }
+        }
+        /* Checking wich topologies are missing */
+        addTopologyToTopologyTable(top);
+    }
+}
+
+function refreshTopologiesTable() {
+    /*Clearing topologies table and rebuild*/
+    tblTopologies.clear().draw();
+    restoreTopologiesTable();
+}
+
+function addTopologyToTopologyTable(top) {
+
+    var data = [];
+
+    /*The Topology Name*/
+    data[0] = top.name;
+    /*The Topology Description*/
+    data[1] = &quot;&lt;button top-name=&#039;&quot; + top.name + &quot;&#039; class=&#039;ui-button ui-widget ui-state-default ui-corner-all ui-button-text-only&#039;&gt;&amp;nbsp;&lt;span class=&#039;glyphicon glyphicon-eye-open&#039;&gt;&lt;/span&gt;&amp;nbsp;&lt;/button&gt;&quot;;
+    /*The Topology SandBoxes*/
+    data[2] = top.presentCount + &#039;/&#039; + top.sdbxs.length;
+    /*The Topology is Complete?*/
+    data[3] = (!top.hasMissingSdbxs) ? &quot;&lt;span class=&#039;glyphicon glyphicon-ok&#039;&gt;&lt;/span&gt;&quot; : &quot;&lt;span class=&#039;glyphicon glyphicon-remove&#039;&gt;&lt;/span&gt;&quot;;
+
+    data[4] = /*&quot;&lt;button onClick=&#039;editTopology(this)&#039; class =&#039;ui-button ui-widget ui-state-default ui-corner-all ui-button-text-only&#039;&gt;&amp;nbsp;&lt;span class=&#039;glyphicon glyphicon-pencil&#039;&gt;&lt;/span&gt;&amp;nbsp;&lt;/button&gt;&quot;; +*/
+        &quot;&lt;button onClick=&#039;removeTopology(this)&#039; class =&#039;ui-button ui-widget ui-state-default ui-corner-all ui-button-text-only&#039;&gt;&amp;nbsp;&lt;span class=&#039;glyphicon glyphicon-remove&#039;&gt;&lt;/span&gt;&amp;nbsp;&lt;/button&gt;&quot;;
+
+    tblTopologies.row.add(data).draw();
+}
+
+function removeTopology(row) {
+
+    /* Storing temporary topology Name */
+    window.tTopologyName = row.parentElement.parentElement.children[0].innerHTML;
+
+    $(&quot;#dialog-confirm&quot;).dialog({
+        resizable: false,
+        modal: true,
+        buttons: {
+            &quot;Yes&quot;: function () {
+                /* Deleting Topology */
+                var name = window.tTopologyName;
+                /* Deleting topology from array */
+                deleteTopologyFromArray(name);
+                /* Saving Topologies back to localstorage */
+                localStorage.setItem(&#039;topologies&#039;, JSON.stringify(topologiesArr));
+                /* Refreshing topology table */
+                refreshTopologiesTable();
+
+                /* If deleted topology was the selected one,
+                 * set selected topology to null */
+                if (selectedTopology != null) {
+                    if (selectedTopology.name == name)
+                        selectedTopology = null;
+                }
+
+                $(this).dialog(&quot;close&quot;);
+            },
+            Cancel: function () {
+                $(this).dialog(&quot;close&quot;);
+            }
+        }
+    });
+}
+
+function addNewTopology() {
+
+    /* Getting fields */
+    var topologyName = $(&quot;#txtTopName&quot;);
+    var topologyDesc = $(&quot;#txtTopDesc&quot;);
+
+    /* Creating the new topology */
+    var nTopology = Topology(topologyName.val(), topologyDesc.val(), slctTableArr);
+
+    /* Storing topologies */
+    topologiesArr.push(nTopology);
+
+    /* Saving Topologies back to localstorage */
+    localStorage.setItem(&#039;topologies&#039;, JSON.stringify(topologiesArr));
+
+    /* Clear fields and table */
+    topologyName.val(&quot;&quot;);
+    topologyDesc.val(&quot;&quot;);
+
+    /* Clear table */
+    tblSlctSdbxTable.clear().draw();
+
+    /* clear array */
+    slctTableArr = [];
+}
+
+function Topology(name, desc, sdbxArr) {
+
+    var topo = {};
+
+    topo.name = name;
+    topo.desc = desc;
+    topo.sdbxs = [];
+    topo.created = new Date();
+    topo.modified = null;
+    topo.hasMissingSdbxs = false;
+    topo.presentCount = 0;
+
+    for (key in sdbxArr) {
+        var sdbx = {};
+        sdbx.id = key;
+        sdbx.isPresent = true;
+        sdbx.lastDatePresent = new Date();
+        //sdbx.sysInfo = avlbSandBoxes[sdbx.id].sysInfo;
+        topo.sdbxs.push(sdbx)
+    }
+
+    /* Setting present count */
+    topo.presentCount = topo.sdbxs.length;
+
+    return topo;
+}
+
+function updateDashBoard(sdbx, isAdding) {
+    var oneGB = 1000000000;
+
+    if (isAdding) {
+
+        lblSandBoxNum.html(Number(lblSandBoxNum.html()) + 1);
+        lblFlops.html((Number(lblFlops.html()) + sdbx.sysInfo.pFlops).toFixed(2));
+
+        if (sdbx.sysInfo.isNodeJS)
+            lblMemory.html((Number(lblMemory.html()) + sdbx.sysInfo.totalmem / oneGB).toFixed(2));
+
+        if (sdbx.sysInfo.isNodeJS) {
+            lblNativeSdbx.html(Number(lblNativeSdbx.html()) + 1);
+            var img = &#039;assets/img/nativeMini.png&#039;;
+        } else {
+            lblBrowserSdbx.html(Number(lblBrowserSdbx.html()) + 1);
+            var img = &#039;assets/img/browserMini.png&#039;;
+        }
+
+        /* Adding Google Map Marker */
+        var ll = new google.maps.LatLng(sdbx.sysInfo.geo.ll[0], sdbx.sysInfo.geo.ll[1]);
+        var marker = new google.maps.Marker({
+            position: ll,
+            title: sdbx.id,
+            //icon: img
+        });
+        /* Adding infoWindow to map markers */
+        var infowindow = new google.maps.InfoWindow({
+            content: buildToolTip(sdbx, false)
+        });
+
+        google.maps.event.addListener(marker, &#039;click&#039;, function () {
+            infowindow.open(gMap, marker);
+        });
+
+        marker.setMap(gMap);
+        sdbx.sysInfo.mapMarker = marker;
+
+				var flightPlanCoordinates = [ll, window.geoServerCoordinates];
+				var flightPath = new google.maps.Polyline({
+					path: flightPlanCoordinates,
+					geodesic: true,
+					strokeColor: &#039;#FF0000&#039;,
+					strokeOpacity: 1,
+					strokeWeight: 1
+				});
+
+				flightPath.setMap(gMap);
+				sdbx.sysInfo.flightPath = flightPath;
+
+    } else {
+        lblSandBoxNum.html(Number(lblSandBoxNum.html()) - 1);
+        lblFlops.html((Number(lblFlops.html()) - sdbx.sysInfo.pFlops).toFixed(2));
+        lblMemory.html((Number(lblMemory.html()) - sdbx.sysInfo.totalmem / oneGB).toFixed(2));
+
+        if (sdbx.sysInfo.isNodeJS)
+            lblNativeSdbx.html(Number(lblNativeSdbx.html()) - 1);
+        else
+            lblBrowserSdbx.html(Number(lblBrowserSdbx.html()) - 1);
+
+        /* Removing Google Maps Marker */
+        sdbx.sysInfo.mapMarker.setMap(null);
+				sdbx.sysInfo.flightPath.setMap(null);
+    }
+}
+
+//Draws Polyline between the Server and the new connection from sandbox
+function addPolylineBetweenServerAndSandbox(ll){
+		var flightPlanCoordinates = [ll, window.geoServerCoordinates];
+		var flightPath = new google.maps.Polyline({
+			path: flightPlanCoordinates,
+			geodesic: true,
+			strokeColor: &#039;#FF0000&#039;,
+			strokeOpacity: 1,
+			strokeWeight: 1
+		});
+
+		flightPath.setMap(gMap);
+}
+
+//Deletes Polyline between the Server and the new connection from sandbox
+function removePolylineBetweenServerAndSandbox(ll){
+		var flightPlanCoordinates = [ll, window.geoServerCoordinates];
+		var flightPath = new google.maps.Polyline({
+			path: flightPlanCoordinates,
+			geodesic: true,
+			strokeColor: &#039;#FF0000&#039;,
+			strokeOpacity: 0,
+			strokeWeight: 1
+		});
+
+		flightPath.setMap(null);
+}
+
+
+function buildToolTip(sdbx, isTableTooltip) {
+    var content = &quot;&quot;;
+
+    switch (sdbx.sysInfo.platform) {
+        case &#039;darwin&#039;:
+            img = &#039;assets/img/mac.png&#039;
+            break;
+        case &#039;linux&#039;:
+            img = &#039;assets/img/linux.png&#039;
+            break;
+        case &#039;win32&#039;:
+            img = &#039;assets/img/windows.png&#039;
+            break;
+    }
+
+    if (isTableTooltip) {
+        content = &quot;&lt;img class=&#039;map&#039; src=&#039;https://maps.googleapis.com/maps/api/staticmap?&quot; +
+        &quot;center=&quot; + sdbx.sysInfo.geo.ll[0] + &quot;,&quot; + sdbx.sysInfo.geo.ll[1] +
+        &quot;&amp;zoom=2&amp;size=280x100&amp;markers=color:red%7C&quot; + sdbx.sysInfo.geo.ll[0] + &quot;,&quot; + sdbx.sysInfo.geo.ll[1] +
+        &quot;&#039;/&gt;&quot; +
+        &quot;&lt;br&gt;&quot; +
+        &quot;&lt;br&gt;&quot;;
+    }
+    console.log(sdbx);
+
+    if (sdbx.sysInfo.isNodeJS)
+        content += &quot;&lt;ul&gt;&quot; +
+        &quot;&lt;li&gt;&quot; + &quot;&lt;img src=&#039;&quot; + img + &quot;&#039;/&gt;&quot; + &quot;&lt;/li&gt;&quot; +
+        &quot;&lt;li&gt;&quot; + &quot;&lt;b&gt;CPU:&lt;/b&gt; &quot; + sdbx.sysInfo.cpu.model + &quot; x &quot; + sdbx.sysInfo.cpu.cores + &quot;&lt;/li&gt;&quot; +
+        &quot;&lt;li&gt;&quot; + &quot;&lt;b&gt;Architecture:&lt;/b&gt; &quot; + sdbx.sysInfo.arch + &quot;&lt;/li&gt;&quot; +
+        &quot;&lt;li&gt;&quot; + &quot;&lt;b&gt;Memory:&lt;/b&gt; &quot; + (sdbx.sysInfo.totalmem / 1000000000).toFixed(2) + &quot; GB&lt;/li&gt;&quot; +
+        &quot;&lt;li&gt;&quot; + &quot;&lt;b&gt;Platform:&lt;/b&gt; &quot; + sdbx.sysInfo.platform + &quot;&lt;/li&gt;&quot; +
+        &quot;&lt;li&gt;&quot; + &quot;&lt;b&gt;OS:&lt;/b&gt; &quot; + sdbx.sysInfo.type + &quot; &lt;/li&gt;&quot; +
+        &quot;&lt;li&gt;&quot; + &quot;&lt;b&gt;FLOPS:&lt;/b&gt; &quot; + sdbx.sysInfo.pFlops + &quot; GFLOPS&lt;/li&gt;&quot; +
+        &quot;&lt;ul&gt;&quot;;
+    else
+        content += &quot;&lt;ul&gt;&quot; +
+        &quot;&lt;li&gt;&quot; + &quot;&lt;img src=&#039;&quot; + img + &quot;&#039;/&gt;&quot; + &quot;&lt;/li&gt;&quot; +
+        &quot;&lt;li&gt;&quot; + &quot;&lt;b&gt;Browser:&lt;/b&gt; &quot; + sdbx.sysInfo.browserInfo[0] + &quot; &quot; + sdbx.sysInfo.browserInfo[1] + &quot;&lt;/li&gt;&quot; +
+        &quot;&lt;li&gt;&quot; + &quot;&lt;b&gt;Platform:&lt;/b&gt; &quot; + sdbx.sysInfo.platform + &quot;&lt;/li&gt;&quot; +
+        &quot;&lt;li&gt;&quot; + &quot;&lt;b&gt;FLOPS:&lt;/b&gt; &quot; + sdbx.sysInfo.pFlops + &quot; GFLOPS&lt;/li&gt;&quot; +
+        &quot;&lt;ul&gt;&quot;;
+
+
+    return content;
+}
+
+//Build tooltip for Server
+function buildServerToolTip(serverCoordinates) {//------------------------------------------------------------------------------&gt; Server tooltip
+  var content = &quot;&quot;;
+
+  img = &#039;assets/img/linux.png&#039;
+
+
+	 content = &quot;&lt;img class=&#039;map&#039; src=&#039;https://maps.googleapis.com/maps/api/staticmap?&quot; +
+	 &quot;center=&quot; + serverCoordinates[0] + &quot;,&quot; + serverCoordinates[1] +
+	 &quot;&amp;zoom=2&amp;size=280x100&amp;markers=color:blue%7Clabel:Server%7C&quot; + serverCoordinates[0] + &quot;,&quot; + serverCoordinates[1] +
+	 &quot;&#039;/&gt;&quot; +
+	 &quot;&lt;br&gt;&quot; +
+	 &quot;&lt;br&gt;&quot;;
+
+	content += &quot;&lt;ul&gt;&quot; +
+	&quot;&lt;li&gt;&quot; + &quot;&lt;img src=&#039;&quot; + img + &quot;&#039;/&gt;&quot; + &quot;&lt;/li&gt;&quot; +
+	&quot;&lt;li&gt;&quot; + &quot;&lt;b&gt;Platform:&lt;/b&gt; Linux Server &lt;/li&gt;&quot; +
+	&quot;&lt;ul&gt;&quot;;
+
+	return content;
+}
+
+
+function clearAllData() {
+
+    /*Clear all data */
+    tblSdbxTable.clear().draw();
+    tblSlctSdbxTable.clear().draw();
+		tblBenchmarkSandboxes.clear().draw();
+		tblTraceroute.clear().draw();
+    /* Clear all map markers */
+    for (var i = 0; i &lt; avlbSandBoxes.length; i++) {
+        avlbSandBoxes[i].sysInfo.mapMarker.setMap(null);
+    }
+    /* Clear arrays */
+    avlbSandBoxes = [];
+    slctTableArr = [];
+
+    /* Clear dashboard */
+    lblSandBoxNum.html(0);
+    lblFlops.html(0);
+    lblMemory.html(0);
+    lblNativeSdbx.html(0);
+    lblBrowserSdbx.html(0);
+}
+
+function addSandBoxToMainTable(sdbx) {
+    var data = [];
+    /*Sandbox ID*/
+    data[0] = sdbx.id;
+
+    /*Sandbox type*/
+    data[1] = (sdbx.sysInfo.isNodeJS) ? &quot;Native&quot; : &quot;Browser&quot;;
+    /*Sandbox type*/
+    data[2] = sdbx.sysInfo.pFlops;
+
+    data[3] = moment(sdbx.sysInfo.uptime).fromNow();
+
+    data[4] = &quot;&lt;button box-id=&#039;&quot; + sdbx.id + &quot;&#039; class=&#039;ui-button ui-widget ui-state-default ui-corner-all ui-button-text-only&#039;&gt;&amp;nbsp;&lt;span class=&#039;glyphicon glyphicon-eye-open&#039;&gt;&lt;/span&gt;&amp;nbsp;&lt;/button&gt;&quot;;
+
+    tblSdbxTable.row.add(data).draw();
+}
+
+//Benchmark
+function addSandBoxToBenchmark(sdbx) {
+		var dataBenchmarkTable = [];
+
+    /*Sandbox ID*/
+		dataBenchmarkTable[0] = sdbx.id;
+
+		/* Distance to the Server */
+		dataBenchmarkTable[1] = nodeToServerDistance(sdbx);
+		dataBenchmarkTable[2] = sdbx.sysInfo.publicIP;
+		dataBenchmarkTable[3] = window.serverIpAddress;
+
+		if(typeof sdbx.sysInfo.RTT != &#039;undefined&#039;)
+			dataBenchmarkTable[4] = sdbx.sysInfo.RTT;
+		else
+			dataBenchmarkTable[4] = &quot;No info&quot;;
+
+		dataBenchmarkTable[5] = &quot;&lt;button box-id=&#039;&quot; + sdbx.id + &quot;&#039; class=&#039;ui-button ui-widget ui-state-default ui-corner-all ui-button-text-only&#039;&gt;&amp;nbsp;&lt;span class=&#039;glyphicon glyphicon-ok-sign&#039;&gt;&lt;/span&gt;&amp;nbsp;&lt;/button&gt;&quot;;
+		dataBenchmarkTable[6] = &quot;&lt;a class=&#039;logout&#039; href=&#039;javascript:doTraceroute(\&quot;&quot;+ sdbx.sysInfo.publicIP.toString() + &quot;\&quot;);&#039;&gt;	Trace &lt;/a&gt;&quot;
+		tblBenchmarkSandboxes.row.add(dataBenchmarkTable).draw();
+}
+
+
+function removeSandBoxFromMainTable(id) {
+
+    var index = -1;
+    tblSdbxTable.rows().indexes().each(function (idx) {
+
+        var d = tblSdbxTable.row(idx).data();
+        if (d[0] == id)
+            index = idx;
+
+    });
+
+    /* If row is found */
+    if (index &gt; -1){
+        tblSdbxTable.row(index).remove().draw(false);
+		}
+}
+
+//Benchmark
+function removeSandBoxFromBenchmark(id) {
+
+    var index = -1;
+
+	  //Benchmark
+		tblBenchmarkSandboxes.rows().indexes().each(function(idx) {
+
+        var d = tblBenchmarkSandboxes.row(idx).data();
+        if (d[0] == id)
+            index = idx;
+
+    });
+
+    /* If row is found */
+    if (index &gt; -1){
+				tblBenchmarkSandboxes.row(index).remove().draw(false);
+		}
+}//End removeSandBoxFromBenchmark
+
+
+function removeSandBoxFromSelectedTable(row) {
+
+    var id = row.parentNode.parentNode.childNodes[0].innerHTML;
+    var index = -1;
+    tblSlctSdbxTable.rows().indexes().each(function (idx) {
+
+        var d = tblSlctSdbxTable.row(idx).data();
+        if (d[0] == id)
+            index = idx;
+
+    });
+
+    /* If row is found */
+    if (index &gt; -1) {
+        tblSlctSdbxTable.row(index).remove().draw(false);
+
+        /* Removing from quick array Hash */
+        delete slctTableArr[id];
+    }
+}
+
+function transferSelectedSandBoxes() {
+
+    var slctdArr = tblSdbxTable.row(&#039;.selected&#039;);
+
+    for (var i = 0; i &lt; slctdArr[0].length; i++) {
+        var data = tblSdbxTable.row(slctdArr[0][i]).data();
+
+        /* If hash array contains this sandbox key, skip adding this one */
+        if (slctTableArr[data[0]])
+            continue;
+
+        var sdbxObj = [data[0], data[1], &quot;&lt;button onClick=&#039;removeSandBoxFromSelectedTable(this)&#039; class =&#039;ui-button ui-widget ui-state-default ui-corner-all ui-button-text-only&#039;&gt;&amp;nbsp;&lt;span class=&#039;glyphicon glyphicon-remove&#039;&gt;&lt;/span&gt;&amp;nbsp;&lt;/button&gt;&quot;];
+        tblSlctSdbxTable.row.add(sdbxObj).draw();
+        slctTableArr[data[0]] = true;
+
+    }
+    ;
+}
+
+function switchScreen(idx) {
+    switch (idx) {
+        case 1://dashboard
+            $(&quot;#dashboard&quot;).fadeIn();
+            $(&quot;#createTopology&quot;).hide();
+            $(&quot;#deploy&quot;).hide();
+						$(&quot;#benchmark&quot;).hide();
+            break;
+        case 2://createTopology
+            $(&quot;#dashboard&quot;).hide();
+            $(&quot;#createTopology&quot;).fadeIn();
+            $(&quot;#deploy&quot;).hide();
+						$(&quot;#benchmark&quot;).hide();
+            break;
+        case 3://deploy
+            $(&quot;#dashboard&quot;).hide();
+            $(&quot;#createTopology&quot;).hide();
+            $(&quot;#deploy&quot;).fadeIn();
+						$(&quot;#benchmark&quot;).hide();
+            break;
+				 case 4://benchmark
+            $(&quot;#dashboard&quot;).hide();
+            $(&quot;#createTopology&quot;).hide();
+            $(&quot;#deploy&quot;).hide();
+						$(&quot;#benchmark&quot;).fadeIn();
+            break;
+    }
+}
+
+function showAlert(tittle, text, isPositive) {
+
+    var img = (isPositive) ? &quot;announcement-positive.png&quot; : &quot;announcement-negative.png&quot;;
+    var unique_id = $.gritter.add({
+        title: tittle,
+        text: text,
+        image: &#039;assets/img/&#039; + img,
+        sticky: false,
+        time: &#039;5000&#039;,
+        class_name: &#039;my-sticky-class&#039;
+    });
+
+    return false;
+}
+
+/* Get Object with all system Specifications */
+function dumpSystemInfo() {
+
+    var os = require(&#039;os&#039;);
+    var specs = {};
+
+    specs.cpu = os.cpus()[0];
+    delete specs.cpu.times;
+    specs.cpu.cores = os.cpus().length;
+    specs.arch = os.arch();
+    specs.freemem = os.freemem();
+    specs.hostname = os.hostname();
+    specs.platform = os.platform();
+    specs.totalmem = os.totalmem();
+    specs.type = os.type();
+    specs.uptime = new Date();
+    specs.publicIP = getClientIP();
+    specs.flops = 1;
+    specs.isNodeJS = typeof exports !== &#039;undefined&#039; &amp;&amp; this.exports !== exports;
+
+    var ifaces = os.networkInterfaces();
+    var innterArr = [];
+    var isBehindNat = true;
+
+    for (var dev in ifaces) {
+        ifaces[dev].forEach(function (details) {
+            if (details.family == &#039;IPv4&#039;) {
+
+                /* Check if behind NAT */
+                if (specs.publicIP == details.address)
+                    isBehindNat = false;
+
+                innterArr.push({
+                    &#039;dev&#039;: dev,
+                    &#039;address&#039;: details.address
+                });
+            }
+        });
+    }
+    specs.isBehindNAT = isBehindNat;
+    specs.networkInterfaces = innterArr;
+    return specs;
+}
+
+function getClientIP() {
+
+    return &quot;0.0.0.0&quot;;
+
+    if (window.XMLHttpRequest) xmlhttp = new XMLHttpRequest();
+    else xmlhttp = new ActiveXObject(&quot;Microsoft.XMLHTTP&quot;);
+
+    xmlhttp.open(&quot;GET&quot;, &quot;http://ip-api.com/json&quot;, false);
+    xmlhttp.send();
+
+    hostipInfo = xmlhttp.responseText.split(&quot;\n&quot;);
+
+    return JSON.parse(hostipInfo[0]).query;
+}
+
+function secondsToTime(secs) {
+    secs = Math.round(secs);
+    var hours = Math.floor(secs / (60 * 60));
+
+    var divisor_for_minutes = secs % (60 * 60);
+    var minutes = Math.floor(divisor_for_minutes / 60);
+
+    var divisor_for_seconds = divisor_for_minutes % 60;
+    var seconds = Math.ceil(divisor_for_seconds);
+
+    var obj = {
+        &quot;h&quot;: hours,
+        &quot;m&quot;: minutes,
+        &quot;s&quot;: seconds
+    };
+    return obj;
+}
+
+//Maverick
+//Calculates distance between two points in km&#039;s (I hate miles)
+function calculateDistance(p1, p2){
+  return (google.maps.geometry.spherical.computeDistanceBetween(p1, p2) / 1000).toFixed(2);
+}
+
+function nodeToServerDistance(sdbx){
+	var geoNodeCoordinates = new google.maps.LatLng(sdbx.sysInfo.geo.ll[0], sdbx.sysInfo.geo.ll[1]);
+
+	return calculateDistance(geoNodeCoordinates, window.geoServerCoordinates);
+}
+
+/* Maverick: Obtaining Server Geo Information */
+function setGeoServerCoordinates(){
+	 var satelize = require(&#039;satelize&#039;);
+
+	 satelize.satelize({ip:window.serverIpAddress}, function(err, geoData) {
+			 var obj = JSON.parse(geoData);
+			 window.geoServerCoordinates = new google.maps.LatLng(obj.latitude, obj.longitude);
+
+             var marker = new google.maps.Marker({
+                 position: window.geoServerCoordinates,
+                 title: &quot;Server&quot;,
+                 icon: &#039;./images/vi-icon-linux.png&#039;
+             });
+             /* Adding infoWindow to map markers */
+             var infowindow = new google.maps.InfoWindow({
+                 content: buildServerToolTip(window.geoServerCoordinates)
+             });
+
+             google.maps.event.addListener(marker, &#039;click&#039;, function () {
+                 infowindow.open(gMap, marker);
+             });
+
+             marker.setMap(gMap);
+	 });
+}
+
+/* Tracing Client to Server path */
+function doTraceroute(remoteHost){
+	var tempAddress = window.serverHostname;
+  tblTraceroute.clear().draw();
+
+	if(typeof remoteHost != &#039;undefined&#039;)
+		tempAddress = remoteHost;
+
+	window.traceroute.trace(tempAddress, function (err,hops) {
+		if (!err) console.log(hops);
+		addHopsToTraceroute(hops);
+	});
+
+}
+
+//Adding hops to Traceroute table
+function addHopsToTraceroute(hops) {
+		var dataTracerouteTable = [];
+		var i = 0;
+		var lastHop = &quot;localhost&quot;;
+
+		while(i==0){
+		  if(hops.indexOf(false)!=-1)
+				hops.splice(hops.indexOf(false), 1);//Delete all false returns
+			else
+			  i=1;
+		}
+
+		var hop = Object.keys(hops);
+		hop.forEach(function(item) {
+			var items = Object.keys(hops[item]);
+			items.forEach(function(ip) {
+				var value = hops[item][ip];
+
+				dataTracerouteTable[0] = lastHop;
+				dataTracerouteTable[1] = ip;
+				lastHop = ip;
+				if(value[0] != undefined)
+					dataTracerouteTable[2] = value[0];
+				else
+				  dataTracerouteTable[2] = &quot;No RTT&quot;;
+
+				if(value[1] != undefined)
+					dataTracerouteTable[3] = value[1];
+				else
+				  dataTracerouteTable[3] = &quot;No RTT&quot;;
+
+				if(value[2] != undefined)
+					dataTracerouteTable[4] = value[2];
+				else
+				  dataTracerouteTable[4] = &quot;No RTT&quot;;
+
+				tblTraceroute.row.add(dataTracerouteTable).draw();
+			});//foreach
+		});
+
+}//END add hops to Traceroute</textarea>
+  </div>
+</div>
+
+<footer class="footer">
+  <div class="container">
+    <p>.</p>
+  </div>
+</footer>
+
+<script type="text/html" id="complexity-popover-template">
+  <div class="complexity-notice">
+    Complexity : {{ complexity.cyclomatic }} <br>
+    Length : {{ complexity.halstead.length }} <br>
+    Difficulty : {{ complexity.halstead.difficulty.toFixed(2) }} <br>
+    Est # bugs : {{ complexity.halstead.bugs.toFixed(2) }}<br>
+  </div>
+</script>
+
+<script type="text/javascript" src="../../assets/scripts/bundles/core-bundle.js"></script>
+<script type="text/javascript" src="../../assets/scripts/bundles/codemirror.js"></script>
+<script type="text/javascript" src="../../assets/scripts/codemirror.markpopovertext.js"></script>
+<script type="text/javascript" src="report.js"></script>
+<script type="text/javascript" src="report.history.js"></script>
+<script type="text/javascript" src="../../assets/scripts/plato-file.js"></script>
+</body>
+</html>
